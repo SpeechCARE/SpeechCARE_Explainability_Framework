@@ -1,4 +1,4 @@
-from models.Model import TBNet
+from model.Model import TBNet
 from utils.Utils import report
 
 import torch
