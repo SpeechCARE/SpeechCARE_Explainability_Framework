@@ -1,0 +1,6 @@
+# AUDIO PROCESSING CONFIG (Whisper-based transcription)
+config:
+  device: "cpu" # Processing device ("cpu" or "cuda" for GPU)
+  batch_size: 16 # Batch size for audio transcription
+  compute_type: "int8" # Quantization type (int8/float16/float32)
+  model_id: "large-v3" # Whisper model variant (tiny/small/medium/large-v3)

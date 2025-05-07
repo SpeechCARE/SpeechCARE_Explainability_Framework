@@ -226,8 +226,9 @@ class TBNet(nn.Module):
         # Step 7: Get the predicted label
         predicted_label = torch.argmax(logits, dim=1).item()
         self.predicted_label = predicted_label
+        contributions = self.last_gate_weights[0].tolist()
 
-        return predicted_label, probabilities[0].tolist()
+        return predicted_label, probabilities[0].tolist(),contributions
       
     def speech_only_forward(self, input_values, return_embeddings=False):
         """

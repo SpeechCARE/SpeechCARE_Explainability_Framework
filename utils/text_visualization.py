@@ -410,7 +410,7 @@ def text(
     <hr style="height: 1px; background-color: #e6f2f4; border: none; margin-top: 18px; margin-bottom: 18px; border-top: 1px dashed #ccc;"">
     <div align="center" style="margin-top: -35px;"><div style="display: inline-block; background: #e6f2f4; padding: 5px; color: #999; font-family: monospace"></div>
     </div>
-     <div align='center' style='background: rgba(230.0, 242.0, 244.0, 1.0); padding-bottom:25px; font-family: Arial; color: rgb(120,120,120);'>
+     <div align='center' style='background: rgba(230.0, 242.0, 244.0, 1.0); padding-bottom:25px; font-family: Arial; color: rgb(0,0,0);'>
                 """
             out += text(
                 v,
@@ -499,7 +499,7 @@ def text(
         document._hover_{uuid} = '_tp_{uuid}_output_' + i;
     }}
 </script>
-<div style=\"color: rgb(120,120,120); font-size: 12px;\">outputs</div>"""
+<div style=\"color: rgb(0,0,0); font-size: 12px;\">outputs</div>"""
         output_values = shap_values.values.sum(0) + shap_values.base_values
         output_max = np.max(np.abs(output_values))
         ############################*******************************############################*******************************
@@ -788,7 +788,7 @@ def text(
         output_name,
     )
     out += (
-        "<div align='center'><div style=\"color: rgb(120,120,120); font-size: 12px; margin-bottom:25px;margin-top: -15px;\">transcript text</div>"
+        "<div align='center'><div style=\"color: rgb(0,0,0); font-size: 12px; margin-bottom:25px;margin-top: -15px;\">transcript text</div>"
     )
     for i, token in enumerate(tokens):
         scaled_value = 0.5 + 0.5 * values[i] / (cmax + 1e-8)

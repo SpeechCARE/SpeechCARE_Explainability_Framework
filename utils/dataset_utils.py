@@ -3,7 +3,6 @@ import torchaudio
 import torchaudio.transforms as transforms 
 
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
-from sklearn.preprocessing import OneHotEncoder
 
 import os
 import numpy as np
@@ -140,7 +139,7 @@ def get_whisper_transcription_and_lang(audio_path, pipe):
     assert os.path.exists(audio_path), f"File not found: {audio_path}"
 
     # Load and resample audio
-    audio, sr = torchaudio.load(audio_path,format="wav")
+    audio, sr = torchaudio.load(audio_path)
     
     resampler = transforms.Resample(orig_freq=sr, new_freq=16000)
     audio = resampler(audio)
