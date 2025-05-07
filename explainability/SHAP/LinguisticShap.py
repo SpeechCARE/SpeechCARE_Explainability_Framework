@@ -4,7 +4,7 @@ import shap
 import numpy as np
 
 
-from SHAP.text_visualization import text, unpack_shap_explanation_contents, process_shap_values
+from utils.text_visualization import text, unpack_shap_explanation_contents, process_shap_values
 
 
 class LinguisticShap():
