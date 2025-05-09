@@ -479,7 +479,7 @@ class AcousticShap():
         if fig_save_path:
             # folder_path = os.path.dirname(fig_save_path)
             # os.makedirs(folder_path, exist_ok=True)
-            plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
+            plt.savefig(fig_save_path, bbox_inches="tight")
         
         print("Detected flat segments (start, end in seconds):")
         for seg in flat_segments:
