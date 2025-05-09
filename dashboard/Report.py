@@ -9,8 +9,151 @@ import matplotlib.pyplot as plt
 import numpy as np
 from io import BytesIO
 import base64
-from typing import List, Tuple
+from typing import List, Tuple,Dict
 import librosa
+
+def categorize_pauses(num_pauses):
+    if num_pauses == 0:
+        return 0,"None"
+    elif num_pauses == 1:
+        return 1,"Single"
+    elif num_pauses in [2, 3]:
+        return 2,"Few"
+    else:
+        return 3,"Several"
+
+def categorize_rhythmic_structure(flat_segments: List[Tuple[float, float]]) -> str:
+    """
+    Categorizes speech rhythm based on flat/monotonous segments in audio.
+    
+    Args:
+        flat_segments: List of (start, end) tuples representing flat segments in seconds.
+                       Empty list indicates no flat segments.
+    
+    Returns:
+        One of four rhythm categories:
+        - 'Rhythmic': No flat segments
+        - 'Relatively Rhythmic': Minimal flat segments (1 segment of 5-6s)
+        - 'Less Rhythmic': Some flat segments (2 segments of 5-6s or 1 segment of 6-10s)
+        - 'Non-Rhythmic': Significant flat segments (>2 segments or any segment >10s)
+    """
+    if not flat_segments:
+        return "Rhythmic"
+    
+    durations = [end - start for start, end in flat_segments]
+    segment_count = len(durations)
+    has_long_segment = any(d > 10 for d in durations)
+    has_medium_segment = any(6 < d <= 10 for d in durations)
+    all_medium = all(5 <= d <= 6 for d in durations)
+    
+    if segment_count == 1 and 5 <= durations[0] <= 6:
+        return 1,"Relatively Rhythmic"
+    elif (segment_count == 2 and all_medium) or has_medium_segment:
+        return 2,"Less Rhythmic"
+    elif segment_count > 2 or has_long_segment:
+        return 3, "Non-Rhythmic"
+    return 0,"Rhythmic"
+
+def create_ranges_table(ranges_dict: Dict, feature_type: str) -> str:
+    """Generate HTML table rows for value ranges with interpretations
+    
+    Args:
+        ranges_dict: Analysis dictionary containing 'ranges'
+        feature_type: Type of feature ('shimmer', 'energy', 'f0', 'f3')
+        
+    Returns:
+        HTML string with table rows
+    """
+    # Interpretation guides for each feature type
+    interpretations = {
+        'shimmer': {
+            'Stable': 'Normal vocal fold vibration with minimal instability',
+            'Almost Stable': 'Mild vocal instability, typically not noticeable',
+            'Almost Unstable': 'Moderate vocal instability that may affect voice quality',
+            'Unstable': 'Severe vocal instability, often clinically noticable'
+        },
+        'energy': {
+            'Very Low': 'Markedly reduced vocal intensity',
+            'Low': 'Below-average vocal intensity',
+            'Moderate': 'Typical vocal intensity range',
+            'High': 'Elevated vocal intensity'
+        },
+        'f0': {
+            'Very Flat': 'Monotonous speech',
+            'Slightly Flat': 'Reduced pitch variation',
+            'Natural': 'Natural pitch modulation',
+            'Dynamic': 'Strong pitch dynamics, energetic and engaging voice'
+        },
+        'f3': {
+            'Very Limited Coordination': 'Very limited tongue–lip coordination',
+            'Limited Coordination': 'Below-average tongue-lip coordination',
+            'Normal Coordination': 'Healthy tongu e–lip coordination',
+            'High Coordination': 'Healthy dynamic tongue–lip coordination and well-controlled articulation'
+        }
+    }
+    
+    rows = []
+    for category_name, (start, end) in ranges_dict['ranges'].items():
+        # Extract just the descriptive part after "Q1: ", "Q2: " etc.
+        display_name = category_name.split(': ')[1] if ': ' in category_name else category_name
+        interpretation = interpretations[feature_type].get(display_name, 'No interpretation available')
+        
+        rows.append(f"""
+            <tr>
+                <td>{start:.2f} to {end:.2f}</td>
+                <td>{display_name}</td>
+                <td>{interpretation}</td>
+            </tr>
+        """)
+    return '\n'.join(rows)
+    
+def create_pause_table() -> str:
+    """Generate HTML table for pause analysis with interpretations"""
+    pause_interpretations = {
+        'None': 'Normal speech flow without interruptions',
+        'Single': 'Minimal pausing, likely natural hesitation',
+        'Few': 'Moderate pausing that may affect fluency',
+        'Several': 'Excessive pausing, potentially clinically significant'
+    }
+    
+    rows = []
+    for count, category in [('0 pauses', 'None'),
+                            ('1 pause', 'Single'),
+                            ('2-3 pauses', 'Few'),
+                            ('>3 pauses', 'Several')]:
+        interpretation = pause_interpretations.get(category, '')
+        rows.append(f"""
+            <tr>
+                <td>{count}</td>
+                <td>{category}</td>
+                <td>{interpretation}</td>
+            </tr>
+        """)
+    return '\n'.join(rows)
+    
+def create_rhythm_table() -> str:
+    """Generate HTML table for rhythm analysis with interpretations"""
+    rhythm_interpretations = {
+        'Rhythmic': 'Normal speech rhythm with good prosody',
+        'Relatively Rhythmic': 'Mild rhythm deviations, mostly natural',
+        'Less Rhythmic': 'Noticeable rhythm disturbances',
+        'Non-Rhythmic': 'Severe rhythm disturbance, potentially pathological'
+    }
+    
+    rows = []
+    for criteria, category in [('No flat segments', 'Rhythmic'),
+                                ('1 segment (5-6s)', 'Relatively Rhythmic'),
+                                ('2 segments or 1 >6s', 'Less Rhythmic'),
+                                ('>2 segments or >10s', 'Non-Rhythmic')]:
+        interpretation = rhythm_interpretations.get(category, '')
+        rows.append(f"""
+            <tr>
+                <td>{criteria}</td>
+                <td>{category}</td>
+                <td>{interpretation}</td>
+            </tr>
+        """)
+    return '\n'.join(rows)
 
 def generate_spectrogram_plot_for_html(
         modified_mel_spectrogram: np.ndarray,
@@ -215,6 +358,22 @@ def generate_prediction_report(model, audio_path, demography_info,acoustic_data,
                                                     sr=acoustic_data['spectrogram']['sr']
                                                 )
 
+    total_flat_duration = sum(end - start for start, end in acoustic_data['entropy']['flat_segments'])
+    longest_flat = max([end - start for start, end in acoustic_data['entropy']['flat_segments']] or [0])
+    rhythm_index , rhythm_category = categorize_rhythmic_structure(acoustic_data['entropy']['flat_segments'])
+    pause_index , pause_category = categorize_pauses(len(acoustic_data['spectrogram']['pauses']))
+    shimmer_index = int(acoustic_data['shimmer_analysis']['category'].split(':')[0][1:]) - 1
+    energy_index = int(acoustic_data['shimmer_analysis']['category'].split(':')[0][1:]) - 1
+    f0_index = int(acoustic_data['f0_analysis']['category'].split(':')[0][1:]) - 1
+    f3_index = int(acoustic_data['f3_analysis']['category'].split(':')[0][1:]) - 1
+    features_index = {
+    'pause': pause_index,
+    'energy': energy_index,
+    'entropy': rhythm_index,
+    'shimmer': shimmer_index,
+    'f0': f0_index,
+    'f3': f3_index
+    }
     
     try:
         # Run inference and get the gating weights
@@ -656,6 +815,150 @@ def generate_prediction_report(model, audio_path, demography_info,acoustic_data,
 
                             <div class="image-caption">Figure 2: Entropy analysis</div>
                         </div>
+                    </div>
+
+                    <!-- Pause Analysis Section -->
+                    <div class="feature-section">
+                        <div class="feature-title">Pause Analysis</div>
+                        <div class="feature-grid">
+                            <div class="feature-value">
+                                <span>Pause Count:</span>
+                                <span><strong>{len(acoustic_data['spectrogram']['pauses'])}</strong></span>
+                            </div>
+                            <div class="feature-value">
+                                <span>Category:</span>
+                                <span><strong>{pause_category}</strong></span>
+                            </div>
+                        </div>
+                        <table class="reference-table">
+                            <tr>
+                                <th>Pause Count</th>
+                                <th>Category</th>
+                                <th>Interpretation</th>
+                            </tr>
+                            {create_pause_table()}
+                        </table>
+                    </div>
+                
+                    <!-- Energy Analysis Section-->
+                    <div class="feature-section">
+                        <div class="feature-title">Energy of Frequency Domain Analysis</div>
+                        <div class="feature-grid">
+                            <div class="feature-value">
+                                <span>Measured Value:</span>
+                                <span><strong>{acoustic_data['energy_analysis']['value']:.2f} dB</strong></span>
+                            </div>
+                            <div class="feature-value">
+                                <span>Category:</span>
+                                <span><strong>{acoustic_data['energy_analysis']['category'].split(': ')[1]}</strong></span>
+                            </div>
+                        </div>
+                        <table class="reference-table">
+                            <tr>
+                                <th>Energy of Frequency Domain Range</th>
+                                <th>Category</th>
+                                <th>Interpretation</th>
+                            </tr>
+                            {create_ranges_table(acoustic_data['energy_analysis'],'energy')}
+                        </table>
+                    </div>
+                    <!-- Rhythmic Structure Section-->
+                    <div class="feature-section">
+                        <div class="feature-title">Rhythmic Structure Analysis</div>
+                        <div class="feature-grid">
+                            <div class="feature-value">
+                                <span>Flat Segments:</span>
+                                <span><strong>{len(acoustic_data['entropy']['flat_segments'])}</strong></span>
+                            </div>
+                            <div class="feature-value">
+                                <span>Total Duration:</span>
+                                <span><strong>{total_flat_duration:.2f} sec</strong></span>
+                            </div>
+                            <div class="feature-value">
+                                <span>Longest Segment:</span>
+                                <span><strong>{longest_flat:.2f} sec</strong></span>
+                            </div>
+                            <div class="feature-value">
+                                <span>Category:</span>
+                                <span><strong>{rhythm_category}</strong></span>
+                            </div>
+                        </div>
+                        <table class="reference-table">
+                            <tr>
+                                <th>Criteria</th>
+                                <th>Category</th>
+                                <th>Interpretation</th>
+                            </tr>
+                            {create_rhythm_table()}
+                        </table>
+                    </div>
+                    <!-- Shimmer Analysis Section-->
+                    <div class="feature-section">
+                        <div class="feature-title">Shimmer Standard Deviation Analysis</div>
+                        <div class="feature-grid">
+                            <div class="feature-value">
+                                <span>Measured Value:</span>
+                                <span><strong>{acoustic_data['shimmer_analysis']['value']:.2f}</strong></span>
+                            </div>
+                            <div class="feature-value">
+                                <span>Category:</span>
+                                <span><strong>{acoustic_data['shimmer_analysis']['category'].split(': ')[1]}</strong></span>
+                            </div>
+                        </div>
+                        <table class="reference-table">
+                            <tr>
+                                <th>Shimmer Standard Deviation Range</th>
+                                <th>Category</th>
+                                <th>Interpretation</th>
+                            </tr>
+                            {create_ranges_table(acoustic_data['shimmer_analysis'],'shimmer')}
+                        </table>
+                    </div>
+                
+                    <!-- Fundamental Frequency Analysis-->
+                    <div class="feature-section">
+                        <div class="feature-title">Fundamental Frequency Analysis</div>
+                        <div class="feature-grid">
+                            <div class="feature-value">
+                                <span>Measured Value:</span>
+                                <span><strong>{acoustic_data['f0_analysis']['value']:.2f} KHz</strong></span>
+                            </div>
+                            <div class="feature-value">
+                                <span>Category:</span>
+                                <span><strong>{acoustic_data['f0_analysis']['category'].split(': ')[1]}</strong></span>
+                            </div>
+                        </div>
+                        <table class="reference-table">
+                            <tr>
+                                <th>Frequency Range</th>
+                                <th>Category</th>
+                                <th>Interpretation</th>
+                            </tr>
+                            {create_ranges_table(acoustic_data['f0_analysis'],'f0')}
+                        </table>
+                    </div>
+
+                    <!-- Formant Frequency Analysis -->
+                    <div class="feature-section">
+                        <div class="feature-title">Third Formant Frequency Analysis</div>
+                        <div class="feature-grid">
+                            <div class="feature-value">
+                                <span>Measured Value:</span>
+                                <span><strong>{acoustic_data['f3_analysis']['value']:.2f} KHz</strong></span>
+                            </div>
+                            <div class="feature-value">
+                                <span>Category:</span>
+                                <span><strong>{acoustic_data['f3_analysis']['category'].split(': ')[1]}</strong></span>
+                            </div>
+                        </div>
+                        <table class="reference-table">
+                            <tr>
+                                <th>Frequency Range</th>
+                                <th>Category</th>
+                                <th>Interpretation</th>
+                            </tr>
+                            {create_ranges_table(acoustic_data['f3_analysis'],'f3')}
+                        </table>
                     </div>
                 </div>
             </div>
