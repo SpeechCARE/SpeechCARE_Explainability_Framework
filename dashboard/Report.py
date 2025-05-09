@@ -99,14 +99,12 @@ def generate_prediction_report(model, audio_path, demography_info, config):
         # Restore original matplotlib style
         plt.style.use(original_style)
     
-    # Generate HTML with dark/light mode toggle
-    html = f"""
-    <!DOCTYPE html>
+    html = """<!DOCTYPE html>
     <html>
     <head>
         <title>Model Decision Analysis</title>
         <style>
-            :root {{
+            :root {
                 --bg-color: #0d1117;
                 --text-color: #e6edf3;
                 --card-bg: #161b22;
@@ -116,17 +114,17 @@ def generate_prediction_report(model, audio_path, demography_info, config):
                 --accent-green: #4CAF50;
                 --accent-teal: #26A69A;
                 --accent-red: #F44336;
-            }}
+            }
             
-            [data-theme="light"] {{
+            [data-theme="light"] {
                 --bg-color: #f8f9fa;
                 --text-color: #212529;
                 --card-bg: #ffffff;
                 --border-color: #dee2e6;
                 --highlight: #FF7043;
-            }}
+            }
             
-            body {{
+            body {
                 font-family: 'Segoe UI', system-ui, sans-serif;
                 background-color: var(--bg-color);
                 color: var(--text-color);
@@ -134,23 +132,23 @@ def generate_prediction_report(model, audio_path, demography_info, config):
                 padding: 0;
                 transition: all 0.3s ease;
                 line-height: 1.6;
-            }}
+            }
             
-            .container {{
+            .container {
                 max-width: 1000px;
                 margin: 0 auto;
                 padding: 20px;
-            }}
+            }
             
-            .header {{
+            .header {
                 text-align: center;
                 margin-bottom: 30px;
                 padding-bottom: 20px;
                 border-bottom: 1px solid var(--border-color);
                 position: relative;
-            }}
+            }
             
-            .theme-toggle {{
+            .theme-toggle {
                 position: absolute;
                 right: 0;
                 top: 0;
@@ -163,9 +161,9 @@ def generate_prediction_report(model, audio_path, demography_info, config):
                 display: flex;
                 align-items: center;
                 gap: 8px;
-            }}
+            }
             
-            .result-card {{
+            .result-card {
                 background-color: var(--card-bg);
                 border-radius: 12px;
                 padding: 25px;
@@ -173,103 +171,180 @@ def generate_prediction_report(model, audio_path, demography_info, config):
                 box-shadow: 0 4px 20px rgba(0,0,0,0.15);
                 border: 1px solid var(--border-color);
                 text-align: center;
-            }}
+            }
             
-            .prediction {{
+            .prediction {
                 font-size: 24px;
                 font-weight: 600;
                 margin-bottom: 10px;
                 color: var(--highlight);
-            }}
+            }
             
-            .confidence {{
+            .confidence {
                 font-size: 18px;
                 color: var(--text-color);
                 opacity: 0.9;
-            }}
+            }
             
-            .chart-container {{
+            .chart-container {
                 background-color: var(--card-bg);
                 border-radius: 12px;
                 padding: 20px;
                 margin-bottom: 30px;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.15);
                 border: 1px solid var(--border-color);
-            }}
+            }
             
-            .details-grid {{
+            .details-grid {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
                 gap: 25px;
                 margin-bottom: 30px;
-            }}
+            }
             
-            .detail-card {{
+            .detail-card {
                 background-color: var(--card-bg);
                 border-radius: 12px;
                 padding: 20px;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.15);
                 border: 1px solid var(--border-color);
-            }}
+            }
             
-            .detail-title {{
+            .detail-title {
                 font-size: 18px;
                 font-weight: 600;
                 margin-bottom: 15px;
                 color: var(--highlight);
                 border-bottom: 1px solid var(--border-color);
                 padding-bottom: 8px;
-            }}
+            }
             
-            .modality-item {{
+            .modality-item {
                 display: flex;
                 align-items: center;
                 margin: 12px 0;
                 padding: 10px;
                 border-radius: 8px;
                 background-color: rgba(255,255,255,0.05);
-            }}
+            }
             
-            .modality-color {{
+            .modality-color {
                 width: 24px;
                 height: 24px;
                 border-radius: 6px;
                 margin-right: 12px;
                 flex-shrink: 0;
-            }}
+            }
             
-            .modality-value {{
+            .modality-value {
                 font-weight: 600;
                 margin-left: auto;
-            }}
+            }
             
-            .audio-info {{
+            /* New collapsible section styles */
+            .explainability-section {
+                background-color: var(--card-bg);
+                border-radius: 12px;
+                padding: 0;
+                margin-bottom: 20px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                border: 1px solid var(--border-color);
+                overflow: hidden;
+            }
+            
+            .section-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px;
+                cursor: pointer;
+                user-select: none;
+            }
+            
+            .section-title {
+                font-size: 18px;
+                font-weight: 600;
+                color: var(--accent-teal);
+                margin: 0;
+            }
+            
+            .toggle-icon {
+                width: 20px;
+                height: 20px;
+                position: relative;
+                transition: transform 0.3s ease;
+            }
+            
+            .toggle-icon::before,
+            .toggle-icon::after {
+                content: '';
+                position: absolute;
+                background-color: var(--text-color);
+                transition: all 0.3s ease;
+            }
+            
+            .toggle-icon::before {
+                top: 50%;
+                left: 0;
+                right: 0;
+                height: 2px;
+                transform: translateY(-50%);
+            }
+            
+            .toggle-icon::after {
+                top: 0;
+                left: 50%;
+                bottom: 0;
+                width: 2px;
+                transform: translateX(-50%);
+            }
+            
+            .collapsed .toggle-icon::after {
+                transform: translateX(-50%) rotate(90deg);
+                opacity: 1;
+            }
+            
+            .section-content {
+                padding: 0 20px;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease, padding 0.3s ease;
+                border-top: 1px solid transparent;
+            }
+            
+            .expanded .section-content {
+                padding: 0 20px 20px;
+                max-height: 2000px;
+                border-top: 1px solid var(--border-color);
+            }
+            
+            .audio-info {
                 background-color: var(--card-bg);
                 border-radius: 12px;
                 padding: 20px;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.15);
                 border: 1px solid var(--border-color);
-            }}
+            }
             
-            .info-title {{
+            .info-title {
                 font-weight: 600;
                 margin-bottom: 8px;
                 color: var(--accent-blue);
-            }}
+            }
             
-            .transcription {{
+            .transcription {
                 background-color: rgba(255,255,255,0.05);
                 padding: 15px;
                 border-radius: 8px;
                 font-style: italic;
                 line-height: 1.5;
-            }}
+            }
             
-            @media (max-width: 768px) {{
-                .details-grid {{
+            @media (max-width: 768px) {
+                .details-grid {
                     grid-template-columns: 1fr;
-                }}
-            }}
+                }
+            }
         </style>
     </head>
     <body>
@@ -277,12 +352,6 @@ def generate_prediction_report(model, audio_path, demography_info, config):
             <div class="header">
                 <h1>Model Decision Analysis</h1>
                 <p style="text-align: center;" >Comprehensive breakdown for: {os.path.basename(audio_path)}</p>
-                <div class="theme-toggle" onclick="toggleTheme()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                    </svg>
-                    <span>Dark Mode</span>
-                </div>
             </div>
             
             <div class="result-card">
@@ -290,9 +359,7 @@ def generate_prediction_report(model, audio_path, demography_info, config):
                 <div class="confidence">Confidence: {prob_values[predicted_label]:.1f}%</div>
             </div>
             
-          
-            
-           <div class="details-grid">
+            <div class="details-grid">
                 <div class="detail-card">
                     <div class="detail-title">Prediction Confidence</div>
                     <div class="modality-item" style="border-left: 4px solid var(--accent-green);">
@@ -308,7 +375,6 @@ def generate_prediction_report(model, audio_path, demography_info, config):
                         <div class="modality-value">{prob_values[2]:.1f}%</div>
                     </div>
                 </div>
-                
                 
                 <div class="detail-card">
                     <div class="detail-title">Modality Contributions</div>
@@ -333,6 +399,30 @@ def generate_prediction_report(model, audio_path, demography_info, config):
             <div class="chart-container">
                 <img src="data:image/png;base64,{plot_data}" alt="Analysis Results" style="width: 100%; border-radius: 8px;">
             </div>
+
+            <!-- New Acoustic Explainability Section -->
+            <div class="explainability-section" id="acoustic-section">
+                <div class="section-header" onclick="toggleSection('acoustic-section')">
+                    <h3 class="section-title">Acoustic Explainability Module</h3>
+                    <div class="toggle-icon"></div>
+                </div>
+                <div class="section-content">
+                    <!-- Content will go here -->
+                    <p>Acoustic analysis details will appear here...</p>
+                </div>
+            </div>
+
+            <!-- New Linguistic Explainability Section -->
+            <div class="explainability-section" id="linguistic-section">
+                <div class="section-header" onclick="toggleSection('linguistic-section')">
+                    <h3 class="section-title">Linguistic Explainability Module</h3>
+                    <div class="toggle-icon"></div>
+                </div>
+                <div class="section-content">
+                    <!-- Content will go here -->
+                    <p>Linguistic analysis details will appear here...</p>
+                </div>
+            </div>
             
             <div class="audio-info">
                 <div class="detail-title">Age</div>
@@ -344,41 +434,21 @@ def generate_prediction_report(model, audio_path, demography_info, config):
         </div>
         
         <script>
-            function toggleTheme() {{
-                const html = document.documentElement;
-                const currentTheme = html.getAttribute('data-theme');
-                const toggleBtn = document.querySelector('.theme-toggle');
-                
-                if (currentTheme === 'light') {{
-                    html.removeAttribute('data-theme');
-                    toggleBtn.innerHTML = `
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                        </svg>
-                        <span>Dark Mode</span>
-                    `;
-                }} else {{
-                    html.setAttribute('data-theme', 'light');
-                    toggleBtn.innerHTML = `
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="5"></circle>
-                            <line x1="12" y1="1" x2="12" y2="3"></line>
-                            <line x1="12" y1="21" x2="12" y2="23"></line>
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                            <line x1="1" y1="12" x2="3" y2="12"></line>
-                            <line x1="21" y1="12" x2="23" y2="12"></line>
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                        </svg>
-                        <span>Light Mode</span>
-                    `;
-                }}
-            }}
+          
+            function toggleSection(sectionId) {
+                const section = document.getElementById(sectionId);
+                section.classList.toggle('expanded');
+                section.classList.toggle('collapsed');
+            }
+
+            // Initialize sections as collapsed
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('acoustic-section').classList.add('collapsed');
+                document.getElementById('linguistic-section').classList.add('collapsed');
+            });
         </script>
     </body>
-    </html>
-    """
+    </html> """
     
     return html
 
