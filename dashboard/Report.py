@@ -6,7 +6,7 @@ import os
 from matplotlib import patheffects
 from matplotlib.patheffects import withStroke
 
-def generate_prediction_report(model, audio_path, demography_info, config):
+def generate_prediction_report(model, audio_path, demography_info, config,acoustic_path):
     """Generate an interactive HTML report with dark/light mode toggle.
     
     Args:
@@ -21,6 +21,8 @@ def generate_prediction_report(model, audio_path, demography_info, config):
     
     # Store original matplotlib style to restore later
     original_style = plt.style.available[0]  # Default style
+    
+    acoustic_images = [f for f in os.listdir(acoustic_path) if f.endswith('.png')]
     
     try:
         # Run inference and get the gating weights
@@ -94,37 +96,6 @@ def generate_prediction_report(model, audio_path, demography_info, config):
             buffer.seek(0)
             plot_data = base64.b64encode(buffer.read()).decode('utf-8')
             plt.close()
-            
-            # Create acoustic analysis images (placeholder - replace with your actual plots)
-            acoustic_images = []
-            for i in range(2):
-                fig, ax = plt.subplots(figsize=(10, 4))
-                fig.patch.set_facecolor('#0d1117')
-                ax.set_facecolor('#161b22')
-                
-                # Example plot (replace with your actual acoustic analysis)
-                if i == 0:
-                    # Spectrogram-like plot
-                    data = np.random.rand(10, 50)
-                    im = ax.imshow(data, cmap='viridis', aspect='auto')
-                    plt.colorbar(im, ax=ax)
-                    ax.set_title('Acoustic Feature Analysis', color='white', pad=10)
-                else:
-                    # Waveform-like plot
-                    x = np.linspace(0, 10, 100)
-                    y = np.sin(x) * np.exp(-x/10)
-                    ax.plot(x, y, color='#FFA726')
-                    ax.set_title('Pitch Contour Analysis', color='white', pad=10)
-                
-                ax.tick_params(colors='white')
-                for spine in ax.spines.values():
-                    spine.set_edgecolor('#30363d')
-                
-                buffer = BytesIO()
-                plt.savefig(buffer, format='png', facecolor=fig.get_facecolor(), bbox_inches='tight', dpi=100)
-                buffer.seek(0)
-                acoustic_images.append(base64.b64encode(buffer.read()).decode('utf-8'))
-                plt.close()
     
     finally:
         # Restore original matplotlib style
@@ -214,9 +185,58 @@ def generate_prediction_report(model, audio_path, demography_info, config):
     </head>
     <body>
         <div class="container">
-            <!-- ... (keep all your existing HTML structure) ... -->
+            <div class="header">
+                <h1>Model Decision Analysis</h1>
+                <p style="text-align: center;" >Comprehensive breakdown for: {os.path.basename(audio_path)}</p>
+            </div>
+            
+            <div class="result-card">
+                <div class="prediction">Predicted: <span style="color: {bar_colors[predicted_label]}">{predicted_class}</span></div>
+                <div class="confidence">Confidence: {prob_values[predicted_label]:.1f}%</div>
+            </div>
+            
+            <div class="details-grid">
+                <div class="detail-card">
+                    <div class="detail-title">Prediction Confidence</div>
+                    <div class="modality-item" style="border-left: 4px solid var(--accent-green);">
+                        <div>Control</div>
+                        <div class="modality-value">{prob_values[0]:.1f}%</div>
+                    </div>
+                    <div class="modality-item" style="border-left: 4px solid #ede28c;">
+                        <div>Mild Cognitive Impairment</div>
+                        <div class="modality-value">{prob_values[1]:.1f}%</div>
+                    </div>
+                    <div class="modality-item" style="border-left: 4px solid #9c4940;">
+                        <div>Alzheimer's Disease</div>
+                        <div class="modality-value">{prob_values[2]:.1f}%</div>
+                    </div>
+                </div>
+                
+                <div class="detail-card">
+                    <div class="detail-title">Modality Contributions</div>
+                    <div class="modality-item">
+                        <div class="modality-color" style="background-color: #008080;"></div>
+                        <div>Acoustic Analysis</div>
+                        <div class="modality-value">{gate_weights[0]*100:.1f}%</div>
+                    </div>
+                    <div class="modality-item">
+                        <div class="modality-color" style="background-color: #457b9d;"></div>
+                        <div>Linguistic Features</div>
+                        <div class="modality-value">{gate_weights[1]*100:.1f}%</div>
+                    </div>
+                    <div class="modality-item">
+                        <div class="modality-color" style="background-color: #e76f51;"></div>
+                        <div>Demographic Factors</div>
+                        <div class="modality-value">{gate_weights[2]*100:.1f}%</div>
+                    </div>
+                </div>
+            </div>
 
-            <!-- Enhanced Acoustic Explainability Section -->
+            <div class="chart-container">
+                <img src="data:image/png;base64,{plot_data}" alt="Analysis Results" style="width: 100%; border-radius: 8px;">
+            </div>
+
+            <!-- New Acoustic Explainability Section -->
             <div class="explainability-section" id="acoustic-section">
                 <div class="section-header" onclick="toggleSection('acoustic-section')">
                     <h3 class="section-title">Acoustic Explainability Module</h3>
@@ -243,9 +263,26 @@ def generate_prediction_report(model, audio_path, demography_info, config):
                 </div>
             </div>
 
-            <!-- ... (rest of your HTML) ... -->
+            <!-- New Linguistic Explainability Section -->
+            <div class="explainability-section" id="linguistic-section">
+                <div class="section-header" onclick="toggleSection('linguistic-section')">
+                    <h3 class="section-title">Linguistic Explainability Module</h3>
+                    <div class="toggle-icon"></div>
+                </div>
+                <div class="section-content">
+                    <!-- Content will go here -->
+                    <p>Linguistic analysis details will appear here...</p>
+                </div>
+            </div>
+            
+            <div class="audio-info">
+                <div class="detail-title">Age</div>
+                <p><strong>Age category:</strong> {demography_info}</p>
+                
+                <div class="detail-title" style="margin-top: 20px;">Transcript of Audio File</div>
+                <div class="transcription">{model.transcription or "No transcription available"}</div>
+            </div>
         </div>
-        
         <script>
             function toggleSection(sectionId) {{
                 const section = document.getElementById(sectionId);
@@ -259,7 +296,11 @@ def generate_prediction_report(model, audio_path, demography_info, config):
                 document.getElementById('linguistic-section').classList.add('collapsed');
             }});
         </script>
+        
+       
     </body>
     </html> """
     
     return html
+
+ 
