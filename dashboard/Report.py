@@ -10,6 +10,7 @@ import numpy as np
 from io import BytesIO
 import base64
 from typing import List, Tuple
+import librosa
 
 def generate_spectrogram_plot_for_html(
         modified_mel_spectrogram: np.ndarray,
@@ -96,7 +97,7 @@ def generate_spectrogram_plot_for_html(
                 linewidth=3,
                 color=formant_colors[formant]
             )
-        elif formant in ["F1", "F2", "F3"]:
+        elif formant in ["F3"]:
             ax.plot(
                 times,
                 values,
