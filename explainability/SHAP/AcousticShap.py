@@ -159,7 +159,7 @@ class AcousticShap():
         overlap: float = 0.2,
         frame_duration: float = 0.3,
         baseline_type: str = 'zeros',
-        fig_save_path: Optional[str] = None,
+        fig_save_dir: Optional[str] = None,
         plot: bool = False
     ) -> Union[np.ndarray, Tuple[np.ndarray, ...]]:
         """
@@ -179,7 +179,7 @@ class AcousticShap():
             overlap: SHAP segment overlap ratio
             frame_duration: SHAP merge frame duration in seconds
             baseline_type: SHAP baseline type
-            fig_save_path: Path to save output figure
+            fig_save_dir: Directory to save output figure
             plot: Whether to display the plot
             
         Returns:
@@ -214,6 +214,7 @@ class AcousticShap():
             overlap=overlap,
             frame_duration=frame_duration,
             baseline_type=baseline_type,
+            fig_save_path = os.path.join(fig_save_dir,'spectrogram.png'),
             plot=plot
         )
 
@@ -225,6 +226,7 @@ class AcousticShap():
             entropy, flat_segments = self.plot_entropy_analysis(
                 audio_path,
                 sr=sr,
+                fig_save_path = os.path.join(fig_save_dir,'entropy.png'),
                 **entropy_kwargs if entropy_kwargs else {}
             )
             return_values.extend([entropy, flat_segments])
@@ -249,6 +251,7 @@ class AcousticShap():
         overlap: float,
         frame_duration: float,
         baseline_type: str,
+        fig_save_path:str,
         plot: bool= True
     ) -> np.ndarray:
         """Internal method to generate appropriate spectrogram."""
@@ -260,7 +263,7 @@ class AcousticShap():
                 sr=sr,
                 formants_to_plot=formants,
                 pauses=pauses,
-                fig_save_path=None,
+                fig_save_path=fig_save_path,
                 plot=plot
             )
         else:
@@ -285,7 +288,7 @@ class AcousticShap():
                 merge_frame_duration=frame_duration,
                 formants_to_plot=formants,
                 pauses=pauses,
-                fig_save_path=None,
+                fig_save_path=fig_save_path,
                 plot=plot
             )
 
@@ -409,6 +412,7 @@ class AcousticShap():
         segments_std_threshold: float = 0.4,
         segments_merge_gap: float = 0.5,
         figsize: Tuple[int, int] = (20, 2),
+        fig_save_path=None,
         dpi: int = 200
     ) -> List[Tuple[float, float]]:
         """
@@ -471,6 +475,11 @@ class AcousticShap():
         plt.title('Spectral Entropy Analysis')
         plt.tight_layout()
         plt.show()
+
+        if fig_save_path:
+            # folder_path = os.path.dirname(fig_save_path)
+            # os.makedirs(folder_path, exist_ok=True)
+            plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
         
         print("Detected flat segments (start, end in seconds):")
         for seg in flat_segments:
