@@ -474,13 +474,13 @@ class AcousticShap():
         plt.ylabel('Entropy (bits)')
         plt.title('Spectral Entropy Analysis')
         plt.tight_layout()
-        plt.show()
+        
 
         if fig_save_path:
             # folder_path = os.path.dirname(fig_save_path)
             # os.makedirs(folder_path, exist_ok=True)
             plt.savefig(fig_save_path, bbox_inches="tight")
-        
+        plt.show()
         print("Detected flat segments (start, end in seconds):")
         for seg in flat_segments:
             print(f"{seg[0]:.2f} - {seg[1]:.2f}")
