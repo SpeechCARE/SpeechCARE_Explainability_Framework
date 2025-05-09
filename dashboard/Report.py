@@ -6,7 +6,7 @@ import os
 from matplotlib import patheffects
 from matplotlib.patheffects import withStroke
 
-def generate_prediction_report(model, audio_path, demography_info, config,acoustic_path):
+def generate_prediction_report(model, audio_path, demography_info,acoustic_data,linguistic_data, config):
     """Generate an interactive HTML report with dark/light mode toggle.
     
     Args:
@@ -21,8 +21,6 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
     
     # Store original matplotlib style to restore later
     original_style = plt.style.available[0]  # Default style
-    
-    acoustic_images = [f for f in os.listdir(acoustic_path) if f.endswith('.png')]
     
     try:
         # Run inference and get the gating weights
@@ -101,7 +99,9 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
         # Restore original matplotlib style
         plt.style.use(original_style)
     
-    html = f"""<!DOCTYPE html>
+    # Generate HTML with dark/light mode toggle
+    html = f"""
+    <!DOCTYPE html>
     <html>
     <head>
         <title>Model Decision Analysis</title>
@@ -142,9 +142,120 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
                 padding: 20px;
             }}
             
-            /* ... (keep all your existing styles) ... */
+            .header {{
+                text-align: center;
+                margin-bottom: 30px;
+                padding-bottom: 20px;
+                border-bottom: 1px solid var(--border-color);
+                position: relative;
+            }}
             
-            /* Enhanced acoustic section styles */
+            .theme-toggle {{
+                position: absolute;
+                right: 0;
+                top: 0;
+                background: var(--card-bg);
+                border: 1px solid var(--border-color);
+                border-radius: 20px;
+                padding: 5px 10px;
+                cursor: pointer;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }}
+            
+            .result-card {{
+                background-color: var(--card-bg);
+                border-radius: 12px;
+                padding: 25px;
+                margin-bottom: 30px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                border: 1px solid var(--border-color);
+                text-align: center;
+            }}
+            
+            .prediction {{
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 10px;
+                color: var(--highlight);
+            }}
+            
+            .confidence {{
+                font-size: 18px;
+                color: var(--text-color);
+                opacity: 0.9;
+            }}
+            
+            .chart-container {{
+                background-color: var(--card-bg);
+                border-radius: 12px;
+                padding: 20px;
+                margin-bottom: 30px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                border: 1px solid var(--border-color);
+            }}
+            
+            .details-grid {{
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 25px;
+                margin-bottom: 30px;
+            }}
+            
+            .detail-card {{
+                background-color: var(--card-bg);
+                border-radius: 12px;
+                padding: 20px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                border: 1px solid var(--border-color);
+            }}
+            
+            .detail-title {{
+                font-size: 18px;
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: var(--highlight);
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 8px;
+            }}
+            
+            .modality-item {{
+                display: flex;
+                align-items: center;
+                margin: 12px 0;
+                padding: 10px;
+                border-radius: 8px;
+                background-color: rgba(255,255,255,0.05);
+            }}
+            
+            .modality-color {{
+                width: 24px;
+                height: 24px;
+                border-radius: 6px;
+                margin-right: 12px;
+                flex-shrink: 0;
+            }}
+            
+            .modality-value {{
+                font-weight: 600;
+                margin-left: auto;
+            }}
+            
+            .audio-info {{
+                background-color: var(--card-bg);
+                border-radius: 12px;
+                padding: 20px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                border: 1px solid var(--border-color);
+            }}
+            
+            .info-title {{
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: var(--accent-blue);
+            }}
             .acoustic-description {{
                 margin-bottom: 20px;
                 padding: 15px;
@@ -152,14 +263,13 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
                 border-radius: 8px;
                 border-left: 4px solid var(--accent-teal);
             }}
-            
+
             .image-grid {{
                 display: grid;
                 grid-template-columns: 1fr;
                 gap: 20px;
-                margin-top: 15px;
             }}
-            
+
             .image-container {{
                 background-color: var(--card-bg);
                 padding: 15px;
@@ -167,20 +277,26 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
                 border: 1px solid var(--border-color);
                 text-align: center;
             }}
-            
-            .image-container img {{
-                max-width: 100%;
-                border-radius: 6px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            }}
-            
+
             .image-caption {{
                 margin-top: 10px;
                 font-size: 14px;
                 color: var(--text-color);
                 opacity: 0.8;
             }}
+            .transcription {{
+                background-color: rgba(255,255,255,0.05);
+                padding: 15px;
+                border-radius: 8px;
+                font-style: italic;
+                line-height: 1.5;
+            }}
             
+            @media (max-width: 768px) {{
+                .details-grid {{
+                    grid-template-columns: 1fr;
+                }}
+            }}
         </style>
     </head>
     <body>
@@ -188,6 +304,12 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
             <div class="header">
                 <h1>Model Decision Analysis</h1>
                 <p style="text-align: center;" >Comprehensive breakdown for: {os.path.basename(audio_path)}</p>
+                <div class="theme-toggle" onclick="toggleTheme()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <span>Dark Mode</span>
+                </div>
             </div>
             
             <div class="result-card">
@@ -195,7 +317,9 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
                 <div class="confidence">Confidence: {prob_values[predicted_label]:.1f}%</div>
             </div>
             
-            <div class="details-grid">
+          
+            
+           <div class="details-grid">
                 <div class="detail-card">
                     <div class="detail-title">Prediction Confidence</div>
                     <div class="modality-item" style="border-left: 4px solid var(--accent-green);">
@@ -211,6 +335,7 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
                         <div class="modality-value">{prob_values[2]:.1f}%</div>
                     </div>
                 </div>
+                
                 
                 <div class="detail-card">
                     <div class="detail-title">Modality Contributions</div>
@@ -236,7 +361,7 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
                 <img src="data:image/png;base64,{plot_data}" alt="Analysis Results" style="width: 100%; border-radius: 8px;">
             </div>
 
-            <!-- New Acoustic Explainability Section -->
+            <!-- Acoustic Explainability Section -->
             <div class="explainability-section" id="acoustic-section">
                 <div class="section-header" onclick="toggleSection('acoustic-section')">
                     <h3 class="section-title">Acoustic Explainability Module</h3>
@@ -244,20 +369,24 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
                 </div>
                 <div class="section-content">
                     <div class="acoustic-description">
-                        <p>The acoustic analysis reveals important patterns in speech characteristics that contribute to the model's decision. 
-                        These visualizations highlight key acoustic features such as pitch variation, speaking rate, and spectral properties 
-                        that differ between cognitive health groups.</p>
+                        <p>The acoustic analysis reveals patterns in speech characteristics that contribute to the model's decision. 
+                        These visualizations highlight key acoustic features that differ between cognitive health groups.</p>
                     </div>
                     
                     <div class="image-grid">
                         <div class="image-container">
-                            <img src="data:image/png;base64,{acoustic_images[0]}" alt="Acoustic Feature Analysis">
-                            <div class="image-caption">Figure 1: Spectrogram analysis showing frequency distribution over time</div>
+                            <img src={acoustic_data['spectrogram_image']} 
+                                alt="Acoustic Feature Analysis" 
+                                style="width: 100%; border-radius: 6px;">
+                            <div class="image-caption">Figure 1: Spectrogram analysis</div>
                         </div>
                         
+                        <!-- Second image -->
                         <div class="image-container">
-                            <img src="data:image/png;base64,{acoustic_images[1]}" alt="Pitch Contour Analysis">
-                            <div class="image-caption">Figure 2: Fundamental frequency (pitch) contour with smoothing</div>
+                            <img src={acoustic_data['entropy_image']} 
+                                alt="Entropy Analysis" 
+                                style="width: 100%; border-radius: 6px;">
+                            <div class="image-caption">Figure 2: Entropy analysis</div>
                         </div>
                     </div>
                 </div>
@@ -283,7 +412,9 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
                 <div class="transcription">{model.transcription or "No transcription available"}</div>
             </div>
         </div>
+        
         <script>
+          
             function toggleSection(sectionId) {{
                 const section = document.getElementById(sectionId);
                 section.classList.toggle('expanded');
@@ -296,10 +427,9 @@ def generate_prediction_report(model, audio_path, demography_info, config,acoust
                 document.getElementById('linguistic-section').classList.add('collapsed');
             }});
         </script>
-        
-       
     </body>
-    </html> """
+    </html>
+    """
     
     return html
 
