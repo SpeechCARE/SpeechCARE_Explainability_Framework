@@ -5,7 +5,189 @@ import base64
 import os
 from matplotlib import patheffects
 from matplotlib.patheffects import withStroke
+import matplotlib.pyplot as plt
+import numpy as np
+from io import BytesIO
+import base64
+from typing import List, Tuple
 
+def generate_spectrogram_plot_for_html(
+        modified_mel_spectrogram: np.ndarray,
+        pauses: List[Tuple[float, float, str, float, float, float, bool]],
+        formant_values: dict,
+        sr: int = 16000,
+        figsize: Tuple[int, int] = (20, 4),
+        dpi: int = 120
+    ) -> str:
+    """
+    Generate a base64-encoded spectrogram plot with pauses and formants for HTML embedding.
+    
+    Args:
+        modified_mel_spectrogram: The modified mel spectrogram (in dB)
+        pauses: List of pause tuples (start, end, pause_type, duration, mean_pitch, mean_intensity, mark)
+        formant_values: Dictionary of formant values {'F0': [], 'F1': [], etc.}
+        sr: Sampling rate
+        figsize: Figure dimensions (width, height)
+        dpi: Figure resolution
+        
+    Returns:
+        Base64-encoded PNG image string
+    """
+    # Create figure with dark background
+    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+    fig.patch.set_facecolor('#0d1117')  # Dark background
+    ax.set_facecolor('#161b22')  # Dark card background
+    
+    # Plot spectrogram
+    img = librosa.display.specshow(
+        modified_mel_spectrogram, 
+        sr=sr, 
+        x_axis="time", 
+        y_axis="mel", 
+        cmap="viridis", 
+        ax=ax
+    )
+    
+    # Style the plot
+    ax.tick_params(axis='both', colors='white')
+    ax.spines['bottom'].set_color('#404040')
+    ax.spines['left'].set_color('#404040')
+    ax.set_xlabel("Time (ms)", color='white', fontsize=12)
+    ax.set_ylabel("Frequency (Hz)", color='white', fontsize=12)
+    
+    # Set x-axis ticks in milliseconds
+    audio_duration = modified_mel_spectrogram.shape[1] * (512 / sr)  # hop_length=512
+    time_ticks_ms = np.arange(0, audio_duration * 1000, 500)  # Every 500 ms
+    time_ticks_seconds = time_ticks_ms / 1000
+    ax.set_xticks(time_ticks_seconds)
+    ax.set_xticklabels([f"{int(t)}" for t in time_ticks_ms], color='white', rotation=45)
+    
+    # Get max mel frequency for pause plotting
+    max_mel = img.axes.yaxis.get_data_interval()[-1]
+    
+    # Plot pauses with different styles
+    if pauses:
+        # Create proxy artists for legend
+        ax.plot([], [], color="yellow", linestyle="-", linewidth=2, label="Informative Pause")
+        ax.plot([], [], color="yellow", linestyle="--", linewidth=2, label="Natural Pause")
+        
+        for start, end, _, _, _, _, mark in pauses:
+            linestyle = "-" if mark else "--"
+            ax.plot(
+                [start, start, end, end, start],
+                [0, max_mel, max_mel, 0, 0],
+                color="yellow",
+                linestyle=linestyle,
+                linewidth=2
+            )
+    
+    # Plot formants if available
+    formant_colors = {"F0": 'red', "F1": 'cyan', "F2": 'white', "F3": '#FF8C00'}
+    times = np.linspace(0, audio_duration, len(formant_values.get('F1', [])))
+    
+    for formant, values in formant_values.items():
+        if formant == "F0":
+            # F0 has different time stamps
+            time_stamps = np.linspace(0, audio_duration, len(values))
+            ax.plot(
+                time_stamps,
+                values,
+                label=formant,
+                linewidth=3,
+                color=formant_colors[formant]
+            )
+        elif formant in ["F1", "F2", "F3"]:
+            ax.plot(
+                times,
+                values,
+                label=formant,
+                linewidth=2,
+                color=formant_colors[formant]
+            )
+    
+    if formant_values:
+        legend = ax.legend(loc='upper right', facecolor='#161b22', edgecolor='#30363d')
+        for text in legend.get_texts():
+            text.set_color('white')
+    
+    plt.tight_layout()
+    
+    # Save to buffer
+    buffer = BytesIO()
+    plt.savefig(
+        buffer, 
+        format='png', 
+        facecolor=fig.get_facecolor(), 
+        bbox_inches='tight', 
+        dpi=dpi
+    )
+    buffer.seek(0)
+    plt.close(fig)
+    
+    return base64.b64encode(buffer.read()).decode('utf-8')
+def generate_entropy_plot_for_html(
+        times: np.ndarray,
+        smoothed_entropy: np.ndarray,
+        flat_segments: List[Tuple[float, float]],
+        figsize: Tuple[int, int] = (20, 2),
+        dpi: int = 120
+    ) -> str:
+    """
+    Generate a base64-encoded entropy plot for HTML embedding.
+    
+    Args:
+        times: Array of time points (in seconds)
+        smoothed_entropy: Array of entropy values
+        flat_segments: List of (start, end) tuples for flat segments
+        figsize: Figure dimensions (width, height)
+        dpi: Figure resolution
+        
+    Returns:
+        Base64-encoded PNG image string
+    """
+    # Create figure with dark background
+    fig = plt.figure(figsize=figsize, dpi=dpi)
+    fig.patch.set_facecolor('#0d1117')  # Dark background
+    
+    ax = plt.gca()
+    ax.set_facecolor('#161b22')  # Dark card background
+    
+    # Plot entropy curve
+    plt.plot(times[:len(smoothed_entropy)], smoothed_entropy, 
+             label='Smoothed Shannon Entropy', color='#1E88E5', linewidth=1.5)
+    
+    # Highlight flat segments
+    for start, end in flat_segments:
+        plt.axvspan(start, end, color='#F44336', alpha=0.3, 
+                   label='Flat Segment' if start == flat_segments[0][0] else "")
+    
+    # Customize appearance
+    plt.xticks(np.arange(0, np.max(times), step=1), color='white')
+    plt.yticks(color='white')
+    plt.grid(axis='x', color='#30363d', linestyle='--', alpha=0.5)
+    plt.xlabel('Time (seconds)', color='white')
+    plt.ylabel('Entropy (bits)', color='white')
+    plt.title('Spectral Entropy Analysis', color='white', pad=20, fontweight='bold')
+    
+    # Style the spines
+    for spine in ax.spines.values():
+        spine.set_color('#404040')
+    
+    # Add legend with white text
+    legend = plt.legend(facecolor='#161b22', edgecolor='#30363d')
+    for text in legend.get_texts():
+        text.set_color('white')
+    
+    plt.tight_layout()
+    
+    # Save to buffer
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png', facecolor=fig.get_facecolor(), 
+               bbox_inches='tight', dpi=dpi)
+    buffer.seek(0)
+    plt.close(fig)
+    
+    return base64.b64encode(buffer.read()).decode('utf-8')
 def generate_prediction_report(model, audio_path, demography_info,acoustic_data,linguistic_data, config):
     """Generate an interactive HTML report with dark/light mode toggle.
     
@@ -21,6 +203,17 @@ def generate_prediction_report(model, audio_path, demography_info,acoustic_data,
     
     # Store original matplotlib style to restore later
     original_style = plt.style.available[0]  # Default style
+    plot_data_entropy = generate_entropy_plot_for_html(acoustic_data['entropy']['times'],
+                                                        acoustic_data['entropy']['smoothed_entropy'],
+                                                        acoustic_data['entropy']['flat_segments'])
+    
+    plot_data_spectrogram = generate_spectrogram_plot_for_html(
+                                                    modified_mel_spectrogram=acoustic_data['spectrogram']['modified_log_S'],
+                                                    pauses=acoustic_data['spectrogram']['pauses'],
+                                                    formant_values=acoustic_data['spectrogram']['formant_values'],
+                                                    sr=acoustic_data['spectrogram']['sr']
+                                                )
+
     
     try:
         # Run inference and get the gating weights
@@ -263,7 +456,82 @@ def generate_prediction_report(model, audio_path, demography_info,acoustic_data,
                 border-radius: 8px;
                 border-left: 4px solid var(--accent-teal);
             }}
-
+            .explainability-section {{
+                background-color: var(--card-bg);
+                border-radius: 12px;
+                padding: 0;
+                margin-bottom: 20px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                border: 1px solid var(--border-color);
+                overflow: hidden;
+            }}
+            
+            .section-header {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 20px;
+                cursor: pointer;
+                user-select: none;
+            }}
+            
+            .section-title {{
+                font-size: 18px;
+                font-weight: 600;
+                color: var(--accent-teal);
+                margin: 0;
+            }}
+            
+            .toggle-icon {{
+                width: 20px;
+                height: 20px;
+                position: relative;
+                transition: transform 0.3s ease;
+            }}
+            
+            .toggle-icon::before,
+            .toggle-icon::after {{
+                content: '';
+                position: absolute;
+                background-color: var(--text-color);
+                transition: all 0.3s ease;
+            }}
+            
+            .toggle-icon::before {{
+                top: 50%;
+                left: 0;
+                right: 0;
+                height: 2px;
+                transform: translateY(-50%);
+            }}
+            
+            .toggle-icon::after {{
+                top: 0;
+                left: 50%;
+                bottom: 0;
+                width: 2px;
+                transform: translateX(-50%);
+            }}
+            
+            .collapsed .toggle-icon::after {{
+                transform: translateX(-50%) rotate(90deg);
+                opacity: 1;
+            }}
+            
+            .section-content {{
+                padding: 0 20px;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease, padding 0.3s ease;
+                border-top: 1px solid transparent;
+            }}
+            
+            .expanded .section-content {{
+                padding: 0 20px 20px;
+                max-height: 2000px;
+                border-top: 1px solid var(--border-color);
+            }}
+        
             .image-grid {{
                 display: grid;
                 grid-template-columns: 1fr;
@@ -375,17 +643,16 @@ def generate_prediction_report(model, audio_path, demography_info,acoustic_data,
                     
                     <div class="image-grid">
                         <div class="image-container">
-                            <img src={acoustic_data['spectrogram_image']} 
-                                alt="Acoustic Feature Analysis" 
-                                style="width: 100%; border-radius: 6px;">
+                            <img src="data:image/png;base64,{plot_data_spectrogram}" 
+                            alt="Spectrogram Analysis" 
+                            style="width: 100%; border-radius: 8px;">
                             <div class="image-caption">Figure 1: Spectrogram analysis</div>
                         </div>
                         
                         <!-- Second image -->
                         <div class="image-container">
-                            <img src={acoustic_data['entropy_image']} 
-                                alt="Entropy Analysis" 
-                                style="width: 100%; border-radius: 6px;">
+                            <img src="data:image/png;base64,{plot_data_entropy}" alt="Entropy Analysis" style="width: 100%; border-radius: 8px;">
+
                             <div class="image-caption">Figure 2: Entropy analysis</div>
                         </div>
                     </div>

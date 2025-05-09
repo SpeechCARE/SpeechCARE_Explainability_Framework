@@ -223,13 +223,13 @@ class AcousticShap():
         
         # Calculate and plot entropy if requested
         if include_entropy:
-            entropy, flat_segments = self.plot_entropy_analysis(
+            times,smoothed_entropy, flat_segments = self.plot_entropy_analysis(
                 audio_path,
                 sr=sr,
                 fig_save_path = os.path.join(fig_save_dir,'entropy.png'),
                 **entropy_kwargs if entropy_kwargs else {}
             )
-            return_values.extend([entropy, flat_segments])
+            return_values.extend([times,smoothed_entropy, flat_segments])
         
         # Add formant values if requested
         if formants_to_plot:
@@ -485,7 +485,7 @@ class AcousticShap():
         for seg in flat_segments:
             print(f"{seg[0]:.2f} - {seg[1]:.2f}")
         
-        return entropy, flat_segments
+        return times,smoothed_entropy, flat_segments
 
     
     def moving_average(self, data, window_size=5):
