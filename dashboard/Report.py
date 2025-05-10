@@ -1079,18 +1079,6 @@ def generate_prediction_report(model, audio_path, demography_info,acoustic_data,
                             <!-- The output from the text() function will be inserted here -->
                             {linguistic_data['shap_text']}
                         </div>
-                        <div class="shap-legend">
-                            <div style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
-                                <div style="display: flex; align-items: center;">
-                                    <div style="width: 20px; height: 20px; background-color: #50b541; border-radius: 3px; margin-right: 5px;"></div>
-                                    <span>Supports prediction</span>
-                                </div>
-                                <div style="display: flex; align-items: center;">
-                                    <div style="width: 20px; height: 20px; background-color: #ab69d4; border-radius: 3px; margin-right: 5px;"></div>
-                                    <span>Against prediction</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
