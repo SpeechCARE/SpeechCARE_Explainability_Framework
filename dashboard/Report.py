@@ -687,8 +687,52 @@ def generate_prediction_report(model, audio_path, demography_info,acoustic_data,
                 background-color: rgba(255,255,255,0.03);
             }}
             
+            .shap-container {{
+                background-color: var(--card-bg);
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 20px;
+                border: 1px solid var(--border-color);
+                overflow: hidden;
+            }}
             
+            .shap-header {{
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: var(--accent-blue);
+            }}
             
+            .shap-output {{
+                background-color: rgba(255,255,255,0.05);
+                border-radius: 8px;
+                padding: 15px;
+                margin-bottom: 15px;
+            }}
+            
+            .shap-text {{
+                line-height: 1.8;
+                font-size: 15px;
+            }}
+            
+            .shap-token {{
+                border-radius: 3px;
+                padding: 0 2px;
+                margin: 0 1px;
+                transition: background-color 0.2s;
+            }}
+            
+            .shap-token:hover {{
+                filter: brightness(1.1);
+            }}
+            
+            .shap-value-label {{
+                color: var(--text-color);
+                opacity: 0.7;
+                font-size: 12px;
+                margin-top: 3px;
+            }}
+                    
             .section-header {{
                 display: flex;
                 justify-content: space-between;
@@ -1016,15 +1060,38 @@ def generate_prediction_report(model, audio_path, demography_info,acoustic_data,
                 </div>
             </div>
 
-            <!-- New Linguistic Explainability Section -->
+            <!-- Linguistic Explainability Section -->
             <div class="explainability-section" id="linguistic-section">
                 <div class="section-header" onclick="toggleSection('linguistic-section')">
                     <h3 class="section-title">Linguistic Explainability Module</h3>
                     <div class="toggle-icon"></div>
                 </div>
                 <div class="section-content">
-                    <!-- Content will go here -->
-                    <p>Linguistic analysis details will appear here...</p>
+                    <div class="acoustic-description">
+                        <p>The linguistic analysis highlights which words and phrases in the transcript most influenced the model's decision. 
+                        Positive values (blue/green) indicate words that pushed the prediction toward the selected class, 
+                        while negative values (red) indicate words that pushed against it.</p>
+                    </div>
+                    
+                    <div class="shap-container">
+                        <div class="shap-header">Linguistic Feature Importance</div>
+                        <div class="shap-output">
+                            <!-- The output from the text() function will be inserted here -->
+                            {linguistic_data['shap_text']}
+                        </div>
+                        <div class="shap-legend">
+                            <div style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
+                                <div style="display: flex; align-items: center;">
+                                    <div style="width: 20px; height: 20px; background-color: #50b541; border-radius: 3px; margin-right: 5px;"></div>
+                                    <span>Supports prediction</span>
+                                </div>
+                                <div style="display: flex; align-items: center;">
+                                    <div style="width: 20px; height: 20px; background-color: #ab69d4; border-radius: 3px; margin-right: 5px;"></div>
+                                    <span>Against prediction</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
