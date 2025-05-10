@@ -625,6 +625,69 @@ def generate_prediction_report(model, audio_path, demography_info,acoustic_data,
                 border: 1px solid var(--border-color);
                 overflow: hidden;
             }}
+            .feature-section {{
+                background-color: var(--card-bg);
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 20px;
+                border: 1px solid var(--border-color);
+            }}
+            
+            .feature-title {{
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: var(--accent-blue);
+                border-bottom: 1px solid var(--border-color);
+                padding-bottom: 8px;
+            }}
+            
+            .feature-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 15px;
+                margin-bottom: 15px;
+            }}
+            
+            .feature-value {{
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 12px;
+                background-color: rgba(255,255,255,0.03);
+                border-radius: 6px;
+                border-left: 3px solid var(--accent-teal);
+            }}
+            
+            .reference-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 15px;
+                font-size: 14px;
+            }}
+            
+            .reference-table th {{
+                background-color: rgba(255,255,255,0.05);
+                padding: 12px 15px;
+                text-align: left;
+                font-weight: 600;
+                color: var(--accent-teal);
+                border-bottom: 2px solid var(--border-color);
+            }}
+            
+            .reference-table td {{
+                padding: 10px 15px;
+                border-bottom: 1px solid var(--border-color);
+            }}
+            
+            .reference-table tr:last-child td {{
+                border-bottom: none;
+            }}
+            
+            .reference-table tr:hover {{
+                background-color: rgba(255,255,255,0.03);
+            }}
+            
+            
             
             .section-header {{
                 display: flex;
@@ -692,26 +755,7 @@ def generate_prediction_report(model, audio_path, demography_info,acoustic_data,
                 border-top: 1px solid var(--border-color);
             }}
         
-            .image-grid {{
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }}
-
-            .image-container {{
-                background-color: var(--card-bg);
-                padding: 15px;
-                border-radius: 8px;
-                border: 1px solid var(--border-color);
-                text-align: center;
-            }}
-
-            .image-caption {{
-                margin-top: 10px;
-                font-size: 14px;
-                color: var(--text-color);
-                opacity: 0.8;
-            }}
+          
             .transcription {{
                 background-color: rgba(255,255,255,0.05);
                 padding: 15px;
@@ -719,10 +763,19 @@ def generate_prediction_report(model, audio_path, demography_info,acoustic_data,
                 font-style: italic;
                 line-height: 1.5;
             }}
-            
+         
             @media (max-width: 768px) {{
                 .details-grid {{
                     grid-template-columns: 1fr;
+                }}
+
+                .feature-grid {{
+                    grid-template-columns: 1fr;
+                }}
+                
+                .reference-table {{
+                    display: block;
+                    overflow-x: auto;
                 }}
             }}
         </style>
