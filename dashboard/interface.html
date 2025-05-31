@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Patient Assessment Report</title>
+    <style>
+        /* CSS Section */
+        body {
+            background-color: #E5F1F3;
+            font-size: 1em;
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .container{
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .banner{
+            width: 100%;
+            height: 45px;
+            background-color: #1E3658;
+            color: white;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 1rem;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+            padding: 10px 15px;
+        }
+        .vertical_box{
+            width: 80%;
+            height: auto;
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .border_bottom{
+            border-bottom: 2px solid #1E3658;
+        }
+        .border_full{
+            border: 2px solid #1E3658;
+        }
+        .border_right{
+            border-right: 2px solid #1E3658;
+        }
+        .vertical_divider {
+            border-right: 2px solid #1E3658;
+            height: 100%;
+        }
+        .horizontal_box{
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            padding: 1rem;
+            gap: 1rem;
+        }
+        .patient_profile{
+            display: flex;
+            flex-direction: row;
+            gap: 1.5rem;
+            align-items: center;
+            flex: 1;
+        }
+        .patiant_info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .modality_contrib img{
+            width: 250px;
+            height: auto;
+        }
+        .patient_profile img{
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .system_info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #1E3658;
+            margin-bottom: 0.5rem;
+        }
+        .model_info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .bold_txt {
+            font-weight: bold;
+            margin-right: 0.3rem;
+        }
+        .signif_factors {
+            flex: 1;
+        }
+        .signif_items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+       
+        .signif_item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .bullet_point {
+            display: inline-block;
+            min-width: 8px;
+            height: 8px;
+            background-color: #1E3658;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            margin-top: 0.4rem;
+        }
+        .audio_box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .more_info a {
+            color: #1E3658;
+            text-decoration: none;
+            font-style: italic;
+        }
+        .more_info a:hover {
+            text-decoration: underline;
+        }
+     
+        .info_box {
+            position: relative; /* Needed for absolute positioning of child */
+            padding: 1rem; /* Adjust as needed */
+            margin: 1rem 0;
+           
+        }
+
+        .info_box .box_title {
+            position: absolute;
+            top: -15px; /* Slightly reduced for better alignment */
+            left: 15px; /* Increased for better spacing */
+            color: #1E3658;
+            font-size: 1rem; /* Slightly smaller */
+            font-weight: 600;
+            background-color: #E5F1F3;
+            padding: 8px; 
+            z-index: 3; 
+            /* line-height: 1; */
+        }
+
+
+        #expandItem {
+            position: absolute;
+            right: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .clinical_sdoh .vertical_box > .info_box {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease;
+            padding: 0;
+            margin: 0;
+        }
+
+        .clinical_sdoh .vertical_box > .info_box.expanded {
+            max-height: 1000px; 
+            padding: 1rem; 
+            margin: 1rem 0;
+        }
+        
+    </style>
+</head>
+<body>
+    
+    <div class="heading container">
+        <div class="vertical_box">
+            <div class="banner"></div>
+            <div class="horizontal_box border_bottom">
+                <div class="patient_profile">
+                    <div class="patiant_image">
+                        <img id="profileImage" src="" alt="patient image">
+                    </div>
+                    <div class="patiant_info">
+                        <h1 id="patientName"></h1>
+                        <p><span class="bold_txt">Gender:</span> <span id="patientGender"></span></p>
+                        <p><span class="bold_txt">Age:</span> <span id="patientAge"></span></p>
+                        <p><span class="bold_txt">Primary Language:</span> <span id="patientLanguage"></span></p>
+                    </div>
+                </div>
+                <div class="system_info">
+                    <div class="title">System Outcome</div>
+                    <div class="horizontal_box">                   
+                        <div class="model_info">
+                            <div><span class="bold_txt">Cognitive Status:</span><span id="cognitiveStatus"></span></div>
+                            <div><span class="bold_txt">System Confidence:</span><span id="systemConfidence"></span></div>
+                        </div>
+                        <div class="modality_contrib">
+                            <div class="title">Modality Contribution</div>
+                            <div class="pie_chart">
+                                <img id="pieChart" src="" alt="pie chart of the modality contribution">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="horizontal_box">
+                <div class="signif_factors">
+                    <div class="title">Significant Factors</div>
+                    <div class="signif_items" id="significantFactors">
+                        <!-- Will be filled by JavaScript -->
+                    </div>
+                    <div class="more_info"><a href="">See 20 most important factors ...</a></div>
+                </div>
+                <div class="audio_box">
+                    <div class="title">Listen to the audio!</div>
+                    <div class="audio_player">
+                        <audio controls autoplay>
+                            <source id="audioSource" src="../data/qnvo.mp3" type="audio/mpeg">
+                        </audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="clinical_sdoh container">
+        <div class="vertical_box">
+            <div class="banner">Clinical Factors and Social Determinants of Health (SDoH) <span id="expandItem"></span></div>
+            <div class="info_box border_full horizontal_box">
+                <span class="box_title">Clinical Factors</span>
+                <div class="patien_status border_right">
+                    <div class="titlle">
+                        Patient's Status: 
+                    </div>
+                    <div class="signif_items" id="patientStatus">
+                        <!-- Will be filled by JavaScript -->
+                    </div>
+                    <div class="more_info"><a href="">More Info...</a></div>
+                </div>
+                <div class="lab_test">
+                    <div class="titlle">
+                        Lab Tests: 
+                    </div>
+                    <div class="signif_items" id="labTests">
+                        <!-- Will be filled by JavaScript -->
+                    </div>
+                    <div class="more_info"><a href="">More Info...</a></div>
+                </div>
+            </div>
+            <div class="info_box border_full">
+                <span class="box_title">SDoH</span>
+                <div class="text_content" id="SDoH"></div>
+                <div class="more_info"><a href="">More Info...</a></div>    
+            </div>
+        </div>
+    </div>
+    <div class="speech_explainability"></div>
+    <div class="consideration"></div>
+
+    <script>
+        // JavaScript Section
+        // Sample data - replace with your actual data retrieval logic
+        const data = {
+            name: "Emily J.",
+            gender: "Female",
+            age: "65",
+            language: "English",
+            cognitive_status: "AD",
+            system_confidence: "98%",
+            profileImage: "../data/profile.png",
+            pieChart: "../data/pie_chart.png",
+            audioFile: "../data/qnvo.mp3",
+            significantFactors: [
+                
+                "Memory issue manifested by frequent repetition of specific words.",
+                "Lack of semantic clarity in speech manifested by reliance on vague terms.",
+                "Insomnia and depression manifested as chief complaints.",
+                "Low educational attainment manifested by high school diploma.",
+            ],
+            patientStatus: {
+                primaryDiagnosis: "Diabetes",
+                otherDiagnosis: "_",
+                chiefComplaints: "Insomnia; Depression; Unexplained mood changes",
+                activeMedications: "Insulin",
+                pastMedicalHistory: "Status post nephrectomy",
+                familyHistory: "Diabetes Mellitus"
+            }, labTests: {
+                VitaminB12: "185 pg/mL",
+                TSH: "5.1 µIU/mL",
+                FreeT4: "0.7 ng/dL",
+                HbA1c: "6.7 %",
+                Homocysteine: "18 µmol/L",
+            },
+            SDoH: "Patient has a high school diploma, reports financial issues, difficulty accessing prescribed medications, smokes two packs/day, leads a sedentary lifestyle, faces transportation barriers to medical services, has low access to nutritious food (e.g., vegetables), and reports access to caregivers."
+        };
+
+        // Function to populate the HTML with data
+        function populateData() {
+            // Patient Info
+            document.getElementById('patientName').textContent = data.name;
+            document.getElementById('patientGender').textContent = data.gender;
+            document.getElementById('patientAge').textContent = data.age;
+            document.getElementById('patientLanguage').textContent = data.language;
+            
+            // System Info
+            document.getElementById('cognitiveStatus').textContent = data.cognitive_status;
+            document.getElementById('systemConfidence').textContent = data.system_confidence;
+            
+            // Images and Audio
+            document.getElementById('profileImage').src = data.profileImage;
+            document.getElementById('pieChart').src = data.pieChart;
+            document.getElementById('audioSource').src = data.audioFile;
+            // SDOH
+            document.getElementById('SDoH').textContent = data.SDoH;
+            
+            // Significant Factors
+            const factorsContainer = document.getElementById('significantFactors');
+            data.significantFactors.forEach(factor => {
+                const factorElement = document.createElement('div');
+                factorElement.className = 'signif_item';
+                factorElement.innerHTML = `<span class="bullet_point"></span>${factor}`;
+                factorsContainer.appendChild(factorElement);
+            });
+            // Patient Status
+            const statusContainer = document.getElementById('patientStatus');
+            const statusItems = [
+                `<span class="bold_txt">Primary Diagnosis:</span>${data.patientStatus.primaryDiagnosis}; <span class="bold_txt">Other diagnosis:</span>${data.patientStatus.otherDiagnosis}`,
+                `<span class="bold_txt">Chief Complaints:</span>${data.patientStatus.chiefComplaints}`,
+                `<span class="bold_txt">Active Medications:</span> ${data.patientStatus.activeMedications}`,
+                `<span class="bold_txt">Past Medical History:</span> ${data.patientStatus.pastMedicalHistory}`,
+                `<span class="bold_txt">Family History:</span> ${data.patientStatus.familyHistory}`
+            ];
+
+            statusItems.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'signif_item';
+                itemElement.innerHTML = `<span class="bullet_point"></span>${item}`;
+                statusContainer.appendChild(itemElement);
+            });
+            // Lab Tests
+            const labTestsContainer = document.getElementById('labTests');
+            const testsItems = [
+                `<span class="bold_txt">Vitamin B12:</span>${data.labTests.VitaminB12}`,
+                `<span class="bold_txt">TSH:</span>${data.labTests.TSH}`,
+                `<span class="bold_txt">Free T4:</span> ${data.labTests.FreeT4}`,
+                `<span class="bold_txt">HbA1c:</span> ${data.labTests.HbA1c}`,
+                `<span class="bold_txt">Homocysteine:</span> ${data.labTests.Homocysteine}`
+            ];
+
+            testsItems.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'signif_item';
+                itemElement.innerHTML = `<span class="bullet_point"></span>${item}`;
+                labTestsContainer.appendChild(itemElement);
+            });
+            
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const expandItem = document.getElementById('expandItem');
+            const banner = document.querySelector('.clinical_sdoh .banner');
+            const contentBoxes = document.querySelectorAll('.clinical_sdoh .vertical_box > .info_box');
+            
+            // Set initial icon (plus)
+            expandItem.innerHTML = '➕'; // Unicode plus icon
+            
+            banner.addEventListener('click', function() {
+                const isExpanded = contentBoxes[0].classList.contains('expanded');
+                
+                // Toggle expanded class on all content boxes
+                contentBoxes.forEach(box => {
+                    box.classList.toggle('expanded');
+                    void box.offsetHeight;
+                });
+                
+                // Change icon based on state
+                if (isExpanded) {
+                    expandItem.innerHTML = '➕'; // Plus icon when collapsed
+                    expandItem.style.transform = 'rotate(0deg)';
+                } else {
+                    expandItem.innerHTML = '➖'; // Minus icon when expanded
+                    expandItem.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+
+        // Call the function when the page loads
+        window.onload = populateData;
+    </script>
+</body>
+</html>
