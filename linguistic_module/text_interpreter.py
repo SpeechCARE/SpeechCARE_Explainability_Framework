@@ -1,4 +1,3 @@
-import openai  # You can replace this with any other LLM API client
 from typing import Dict, List, Union
 from modelscope import AutoTokenizer
 from modelscope import AutoModelForCausalLM
@@ -6,22 +5,81 @@ import torch
 import numpy as np
 import json
 
-system_prompt1 = """
-    You are a specialized language model trained to detect linguistic cues of cognitive impairment. You will receive:
-    1) A set of linguistic features to consider.
-    2) A text passage to analyze.
-    3) Token-level SHAP values from a pre-trained model.
-    
+# Define interpretations and directions for each feature
+metric_interpretations = {
+    'Content_Density': "Higher = more informative speech; Lower = vague or empty content",
+    'Part_of_Speech_rate': "Higher = greater syntactic richness; Lower = limited structure use",
+    'Reference_Rate_to_Reality': "Higher = more concrete reference; Lower = vague or abstract reference",
+    'Relative_pronouns_rate': "Higher = more complex syntax; Lower = simplified sentence structure",
+    'Negative_adverbs_rate': "Higher = more negation/adversity expressed; may signal emotional tone or confusion",
+    'Filler words': "Higher = more hesitation/disfluency; Lower = fluent delivery",
+    'word_count': "Higher = more elaboration or verbosity; Lower = minimal content",
+    'Lexical frequency': "Higher = use of common/simple words; Lower = rarer or more diverse vocabulary",
+    'Speech rate': "Higher = fluent/pressured speech; Lower = slowed/circumlocutory delivery",
+    'Filler rate': "Higher = frequent disfluency; Lower = smooth flow",
+    'rate_basis': "Contextual rate baseline; interpret in combination with speech rate",
+    'Definite_articles': "Higher = specific reference; overuse may reflect compensation or reduced naming ability",
+    'Indefinite_articles': "Higher = vague/general reference; may reflect word-finding issues",
+    'Pronouns': "Higher = less specific reference; may indicate reduced lexical access",
+    'Nouns': "Higher = more object/subject specificity; Lower = lexical retrieval difficulty",
+    'Verbs': "Higher = syntactic action richness; Lower = sentence simplification",
+    'Determiners': "Higher = more grammatical structure; Lower = syntactic degradation",
+    'Content words': "Higher = richer expression; Lower = vague or incoherent discourse",
+    'Consecutive repeated clauses': "Higher = perseveration or reduced working memory; Lower = fluent speech",
+    'Type-Token Ratio (TTR)': "Higher = more lexical variety; Lower = repetitive vocabulary",
+    'Root Type-Token Ratio (RTTR)': "Higher = more lexical variety (normalized); Lower = reduced richness",
+    'Corrected Type-Token Ratio (CTTR)': "Higher = richer vocabulary; Lower = simplified lexicon",
+    'Word count': "Higher = elaborated response; Lower = terse or minimal output",
+    'Unique Word count': "Higher = lexical diversity; Lower = redundancy or retrieval failure",
+    'Ratio unique word count to total word count': "Higher = richer vocabulary; Lower = repetition",
+    "Brunet's Index": "Lower = more lexical richness; Higher = limited vocabulary",
+    "Honoré's Statistic": "Higher = greater lexical variety; Lower = limited vocabulary",
+    'Measure of Textual Lexical Diversity': "Higher = diverse vocabulary; Lower = redundancy",
+    'Hypergeometric Distribution Diversity': "Higher = high lexical variation; Lower = limited expression"
+}
+
+system_prompt3 = """ 
+    Now you will receive a set of linguistic features to consider and you need to refine your previous response accordingly.
+
+      
     ---
     ## Linguistic Features to Consider:
-    • Lexical Richness: Unusual or varied vocabulary, overuse of vague terms (e.g., “thing,” “stuff”).
-    • Syntactic Complexity: Simple vs. complex sentence constructions, grammatical errors.
-    • Sentence Length and Structure: Fragmented vs. compound/complex sentences.
-    • Repetition: Repeated words, phrases, or clauses.
-    • Disfluencies and Fillers: Terms like “um,” “uh,” “like.”
-    • Semantic Coherence and Content: Logical flow of ideas, clarity of meaning.
-    • Additional Feature: Placeholder for any extra marker (e.g., specialized domain terms).
+    • Lexical Richness: Captured by Type-Token Ratio (TTR), Root TTR, Corrected TTR, Brunet's Index, Honoré's Statistic, MTLD, HDD, and Ratio of Unique to Total Word Count. Lower values may suggest limited vocabulary or word retrieval deficits common in ADRD.
+
+    • Syntactic Complexity: Informed by Part_of_Speech_rate, Relative_pronouns_rate, Determiners, Verbs, and use of complex forms like Relative Pronouns. Declines may reflect grammatical simplification.
+
+    • Sentence Length and Structure: Approximated by Word count, Unique Word count, and Consecutive repeated clauses. Short or repetitive sentence structures can indicate working memory or planning issues.
+
+    • Repetition: Directly captured by Consecutive repeated clauses. High rates may suggest perseveration or reduced cognitive flexibility.
+
+    • Disfluencies and Fillers: Measured by Filler words and Filler rate. Higher usage may reflect hesitation, planning difficulty, or word-finding trouble.
+
+    • Semantic Coherence and Content Density: Based on Content_Density and Reference_Rate_to_Reality. Lower content density or vague references can indicate impaired semantic organization.
+
+    • Referential Clarity and Pronoun Use: Captured by Pronouns, Definite_articles, Indefinite_articles, and Reference_Rate_to_Reality. Overuse of pronouns or poor reference to specific entities may indicate trouble maintaining discourse cohesion.
+
     ---
+
+    ## Previous Response:
+    {previous_response}
+
+    ----
+    ## Linguistic Features:
+    {linguistic_features}
+
+    ---
+    You must refine your previous response using the linguistic features based on:
+    Synthesize the significance of provided features to explain how they collectively point to healthy cognition or potential cognitive impairment.
+    Ensure that the explanations are concise, insightful, and relevant to cognitive impairment assessment.
+    Output should be structured as **bullet points**, with each bullet clearly describing one key aspect of the analysis. 
+    ---
+    ## Analysis:
+"""
+system_prompt1 = """
+    You are a specialized language model trained to detect linguistic cues of cognitive impairment. You will receive:
+    1) A text passage to analyze.
+    2) Token-level SHAP values from a pre-trained model.
+  
     ## Text to Analyze:
     {text}
     ---
@@ -57,7 +115,7 @@ class TextInterpreter:
     A class to interpret SHAP values and analyze text for cognitive impairment cues using an LLM.
     """
     
-    def __init__(self,model_path: str ='/workspace/models/llama70B'):
+    def __init__(self,model_path: str):
         """
         Initialize the interpreter with the LLM API key and model.
         
@@ -112,14 +170,15 @@ class TextInterpreter:
         Returns:
             str: The generated analysis text
         """
-        shap_values.values = shap_values[0,:,shap_index]
-        token_shap_pairs = self.format_shap_values(shap_values) 
+        shap_values_ = shap_values
+        shap_values_.values = shap_values_.values[0,:,shap_index]
+        token_shap_pairs = self.format_shap_values(shap_values_) 
 
         prompt = system_prompt1.format(text=transcription, shap_values=json.dumps(token_shap_pairs, indent=2))
         
         # Call the LLM
         response = self._call_llm(prompt)
-        return response
+        return prompt, response
     
     def refine_analysis(
         self, 
@@ -138,34 +197,18 @@ class TextInterpreter:
         Returns:
             str: Refined analysis incorporating the metrics.
         """
-        # Format the metrics for the prompt
+       
+
+        # Format the metrics with interpretation
         metrics_description = "\n".join(
-            [f"- {metric.replace('_', ' ').title()}: {value} (Range: 0=low, 1=high)" 
-             for metric, value in refinement_metrics.items()]
+            [f"- {metric.replace('_', ' ').title()}: {value} → {metric_interpretations.get(metric, 'No interpretation available')}"
+            for metric, value in refinement_metrics.items()]
         )
+
         
-        input_message = (
-            f"### Previous Analysis ###\n{previous_response}\n\n"
-            f"### New Linguistic/Cognitive Metrics ###\n"
-            f"The following metrics were computed for the text (0=low, 1=high):\n"
-            f"{metrics_description}\n\n"
-            f"### Refinement Task ###\n"
-            f"Revise the previous analysis by incorporating these metrics:\n"
-            f"1. **Lexical Richness**: Adjust interpretation based on vocabulary diversity. "
-            f"Low scores suggest repetitive or simple word use; high scores indicate varied vocabulary.\n"
-            f"2. **Syntactic Complexity**: Update analysis of sentence structure. "
-            f"Low scores imply short/grammatically simple sentences; high scores suggest complex syntax.\n"
-            f"3. **Semantic Coherence**: Reassess logical flow. "
-            f"Low scores indicate tangential/incoherent speech; high scores reflect clear logic.\n"
-            f"4. **Memory Indicators**: Reinterpret mentions of forgetfulness. "
-            f"Low scores may imply weaker evidence; high scores strengthen the case.\n\n"
-            f"### Output Format ###\n"
-            f"- Compare the metrics to typical cognitive impairment patterns.\n"
-            f"- Explain how the scores support or contradict the initial analysis.\n"
-            f"- Highlight any new insights (e.g., 'Low lexical richness aligns with expected decline in vocabulary').\n"
-        )
+        input_message = system_prompt3.format(previous_response=previous_response, linguistic_features=metrics_description)
         
-        return self._call_llm(input_message)
+        return input_message, self._call_llm(input_message)
     
     def prep_prompt_summarize(self,generated_text):
         content = system_prompt2.format(generated_text=generated_text)
@@ -227,46 +270,3 @@ class TextInterpreter:
             raise Exception(f"Error calling LLM: {e}")
 
 
-
-
-# # Example usage
-# if __name__ == "__main__":
-#     # Initialize the interpreter
-#     interpreter = TextInterpreter()
-    
-#     # Example input text and SHAP values
-#     text = """
-#     The patient is a 65-year-old male who reports increasing forgetfulness over the past year. 
-#     He often struggles to recall names of close friends and frequently misplaces items like his keys. 
-#     His speech is somewhat halting, with occasional word-finding difficulties.
-#     """
-    
-#     shap_values = {
-#         "forgetfulness": 0.8,
-#         "recall names": 0.7,
-#         "misplaces items": 0.6,
-#         "speech is somewhat halting": 0.5,
-#         "word-finding difficulties": 0.9
-#     }
-    
-    
-#     # Step 1: Initial analysis
-#     print("Performing initial analysis...")
-#     initial_response = interpreter.analyze_cognitive_impairment(
-#         text=text,
-#         shap_values=shap_values,
-#     )
-#     print("\nInitial Analysis Results:")
-#     print(initial_response)
-    
-#     # Example refinement criteria (replace with your actual criteria)
-#     refinement_criteria ={"Lexical Richness":0.2}
-    
-#     # Step 2: Refine the analysis
-#     print("\nRefining analysis...")
-#     refined_response = interpreter.refine_analysis(
-#         previous_response=initial_response,
-#         refinement_criteria=refinement_criteria
-#     )
-#     print("\nRefined Analysis Results:")
-#     print(refined_response)

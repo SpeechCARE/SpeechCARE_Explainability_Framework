@@ -43,7 +43,7 @@ class TextFeatureExtractor:
             }
         }
 
-        self.df = pd.DataFrame({"transcription":text})
+        self.df = pd.DataFrame({"transcription":[text]})
         
        
 
@@ -274,16 +274,18 @@ class TextFeatureExtractor:
         required_cols = {'WDT', 'WP'}
         missing_cols = required_cols - set(df.columns)
         if missing_cols:
-            raise ValueError(f"Missing required columns for relative pronouns: {missing_cols}")
-        
-        # Calculate relative pronoun frequencies
-        relative_pronouns = df['WDT'] + df['WP']
-        total_relative_pronouns = relative_pronouns.sum()
-        
-        # Normalize (handle zero total case)
-        df['Relative_pronouns_rate'] = (
-            relative_pronouns / (total_relative_pronouns + 1e-10)  # Add epsilon to avoid division by zero
-        ) if total_relative_pronouns > 0 else 0.0
+            df['Relative_pronouns_rate'] = None
+            print(f"Missing required columns for relative pronouns: {missing_cols}")
+
+        else:
+            # Calculate relative pronoun frequencies
+            relative_pronouns = df['WDT'] + df['WP']
+            total_relative_pronouns = relative_pronouns.sum()
+            
+            # Normalize (handle zero total case)
+            df['Relative_pronouns_rate'] = (
+                relative_pronouns / (total_relative_pronouns + 1e-10)  # Add epsilon to avoid division by zero
+            ) if total_relative_pronouns > 0 else 0.0
         
         return df
     
@@ -340,39 +342,73 @@ class TextFeatureExtractor:
     def analyze_speech_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Analyze various speech features including filler words, lexical frequency,
-        speech rate, and filler rate.
+        speech rate, and filler rate. Uses audio length if available, otherwise uses word count.
         
         Args:
             df: DataFrame containing clean text and POS tags
             
         Returns:
             DataFrame with added speech feature columns
+            
+        Raises:
+            KeyError: If required 'clean_text' column is missing
+            ValueError: If neither length_audio_file nor word count can be used
         """
+        # Check for required clean_text column
+        if 'clean_text' not in df.columns:
+            raise KeyError("Missing required column: 'clean_text'")
+        
+        # Make a copy to avoid SettingWithCopyWarning
+        df = df.copy()
+        
         # Define filler words list
         filler_list = ["uh", "um", "hmm", "mhm", "huh"]
         
         # Count filler words
         df["Filler words"] = df["clean_text"].apply(
-            lambda x: sum(1 for word in self.nlp(x) if str(word.text) in filler_list)
-        )
+            lambda x: sum(1 for word in self.nlp(x) if str(word.text).lower() in filler_list))
         
-        # Calculate lexical frequency
+        # Calculate word counts for fallback rate calculations
+        df["word_count"] = df["clean_text"].apply(lambda x: len(self.nlp(x)))
+        
+        # Determine what to use for rate calculations
+        if 'length_audio_file' in df.columns and (df['length_audio_file'] > 0).all():
+            rate_denominator = df['length_audio_file'].values  # Use .values for array
+        else:
+            rate_denominator = df['word_count'].values
+        
+        # Calculate lexical frequency (only for existing POS columns)
         real_pos_list = ['VERB', 'PROPN', 'NOUN', 'ADV', 'ADJ']
-        df["Lexical frequency"] = np.log2(
-            df[real_pos_list].sum(axis=1)
-        )
+        available_pos = [pos for pos in real_pos_list if pos in df.columns]
         
-        # Calculate speech rate (excluding PUNCT)
-        pos_columns = df.loc[:, "ADJ":"VERB"].columns
-        pos_columns = pos_columns.drop("PUNCT") if "PUNCT" in pos_columns else pos_columns
-        df["Speech rate"] = (
-            df[pos_columns].sum(axis=1) / df["length_audio_file"]
-        )
+        if available_pos:
+            df["Lexical frequency"] = np.log2(
+                df[available_pos].sum(axis=1).replace(0, 1)  # Avoid log(0)
+            )
+        else:
+            df["Lexical frequency"] = 0
+        
+        # Calculate speech rate (excluding PUNCT if it exists)
+        pos_columns = []
+        if 'ADJ' in df.columns and 'VERB' in df.columns:
+            adj_idx = df.columns.get_loc('ADJ')
+            verb_idx = df.columns.get_loc('VERB')
+            pos_columns = df.columns[adj_idx:verb_idx+1].tolist()
+            if 'PUNCT' in pos_columns:
+                pos_columns.remove('PUNCT')
+        
+        if pos_columns:
+            # Ensure both operands are numpy arrays to avoid alignment issues
+            speech_counts = df[pos_columns].sum(axis=1).values
+            df["Speech rate"] = speech_counts / rate_denominator
+        else:
+            df["Speech rate"] = 0
         
         # Calculate filler rate
-        df["Filler rate"] = (
-            df["Filler words"] / df["length_audio_file"]
-        )
+        df["Filler rate"] = df["Filler words"].values / rate_denominator
+        
+        # Add metadata column indicating what denominator was used
+        df["rate_basis"] = "audio_seconds" if 'length_audio_file' in df.columns and (df['length_audio_file'] > 0).all() else "word_count"
         
         return df
     
@@ -495,12 +531,11 @@ class TextFeatureExtractor:
         def _get_lexical_metrics(text: str) -> dict:
             """Helper function to compute all lexical metrics at once"""
             lr = LexicalRichness(text)
+
             return {
-                'TTR': lr.ttr,
-                'RTTR': lr.rttr,
-                'CTTR': lr.cttr,
-                'MSTTR': lr.msttr(segment_size=25),  # Using default segment size of 25
-                'MATTR': lr.mattr(window_size=25)    # Using default window size of 25
+                'Type-Token Ratio (TTR)': lr.ttr,
+                'Root Type-Token Ratio (RTTR)': lr.rttr,
+                'Corrected Type-Token Ratio (CTTR)': lr.cttr,
             }
         
         # Apply the function once and expand results into multiple columns
@@ -545,10 +580,10 @@ class TextFeatureExtractor:
     def calculate_advanced_lexical_metrics(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate advanced lexical diversity metrics including:
-        - Brunet's Index
-        - Honoré's Statistic
-        - Measure of Textual Lexical Diversity (MTLD)
-        - Hypergeometric Distribution Diversity (HDD)
+        - Brunet's Index. Interpretation: Lower values indicate richer vocabulary. Less sensitive to text length.
+        - Honoré's Statistic. Interpretation: Higher values indicate more lexical richness.
+        - Measure of Textual Lexical Diversity (MTLD). Interpretation: Robust to text length; higher values indicate greater diversity.
+        - Hypergeometric Distribution Diversity (HDD). Interpretation: Based on probability of word occurrences; robust for short texts.
         
         Args:
             df: DataFrame containing clean text and word counts
@@ -613,9 +648,9 @@ class TextFeatureExtractor:
         self.df = self.add_tag_features(deepcopy(self.df))
         self.df = self.calculate_content_density(deepcopy(self.df))
         self.df = self.calculate_pos_rate(deepcopy(self.df))
-        self.df = self.calculate_reality_reference_rate(deepcopy(self.df))
-        self.df = self.calculate_relative_pronoun_rate(deepcopy(self.df))
-        self.df = self.calculate_negative_adverb_rate(deepcopy(self.df))
+        self.df = self.calculate_reality_reference_rate(deepcopy(self.df)) #Calculate the noun-to-verb ratio (Reference Rate to Reality)
+        self.df = self.calculate_relative_pronoun_rate(deepcopy(self.df)) #normalized relative pronoun usage rate across documents. (where, that,...)
+        self.df = self.calculate_negative_adverb_rate(deepcopy(self.df)) # Never
         self.df = self.analyze_speech_features(deepcopy(self.df))
         self.df = self.calculate_grammatical_ratios(deepcopy(self.df))
         self.df = self.analyze_content_features(deepcopy(self.df))
@@ -623,17 +658,5 @@ class TextFeatureExtractor:
         self.df = self.calculate_word_counts(deepcopy(self.df))
         self.df = self.calculate_advanced_lexical_metrics(deepcopy(self.df))
 
-        return self.df.to_dict()
+        return self.df
 
-
-# Example Usage
-# if __name__ == "__main__":
-#     sample_text = "The cat sat on the mat. The dog barked loudly."
-#     extractor = TextFeatureExtractor(sample_text)
-    
-#     # Extract all features (will raise errors until you implement them!)
-#     try:
-#         features = extractor.extract_all_features()
-#         print(features)
-#     except NotImplementedError as e:
-#         print(f"Feature not implemented yet: {e}")
