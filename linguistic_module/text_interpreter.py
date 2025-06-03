@@ -1,9 +1,11 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Union,Optional,Tuple
 from modelscope import AutoTokenizer
 from modelscope import AutoModelForCausalLM
 import torch
 import numpy as np
 import json
+from openai import OpenAI
+import openai
 
 system_prompt4 = """
         You are a specialized language model trained to detect linguistic cues of cognitive impairment. You will receive:
@@ -136,26 +138,55 @@ class TextInterpreter:
     A class to interpret SHAP values and analyze text for cognitive impairment cues using an LLM.
     """
     
-    def __init__(self,model_path: str):
+    def __init__(self, model_path: Optional[str] = None, openai_config: Optional[Dict] = None):
         """
-        Initialize the interpreter with the LLM API key and model.
+        Initialize the interpreter with either a local model or OpenAI API.
         
         Args:
-            model_path (str): Path to the LLM model to use.
+            model_path: Path to local HuggingFace model. If None, uses OpenAI.
+            openai_config: Dictionary with 'api_key' and 'base_url' for OpenAI.
+            
+        Raises:
+            ValueError: If neither model_path nor openai_config is provided
         """
-        self.model,self.tokenizer = self.initialize_model(model_path)
+        if not model_path and not openai_config:
+            raise ValueError("Either model_path or openai_config must be provided")
+            
+        self.model, self.tokenizer = self._initialize_model(model_path, openai_config)
 
-    def initialize_model(self, model_path ):
+    def _initialize_model(self, 
+                         model_path: Optional[str], 
+                         openai_config: Optional[Dict]) -> Tuple[Union[AutoModelForCausalLM, OpenAI], Optional[AutoTokenizer]]:
         """
-        Initializes and returns the language model and tokenizer with optimized settings.
+        Initializes and returns the language model and tokenizer.
         
+        Args:
+            model_path: Path to local HuggingFace model
+            openai_config: Configuration for OpenAI API
+            
         Returns:
-            tuple: (model, tokenizer) pair for text generation
+            Tuple of (model, tokenizer). Tokenizer is None for OpenAI.
         """
-        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, device_map='auto', trust_remote_code=True)
-        tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
-    
-        return model, tokenizer
+        if model_path:
+            model = AutoModelForCausalLM.from_pretrained(
+                model_path,
+                torch_dtype=torch.bfloat16,
+                device_map='auto',
+                trust_remote_code=True
+            )
+            tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+            return model, tokenizer
+            
+        # OpenAI case
+        if not openai_config.get('api_key'):
+            raise ValueError("OpenAI config must include 'api_key'")
+            
+        model = OpenAI(
+            api_key=openai_config['api_key'],
+            base_url=openai_config.get('base_url')
+        )
+        return model, None
+
     def format_shap_values(self,shap_explanation):
         """
         Convert SHAP Explanation object to list of (token, SHAP value) pairs.
@@ -253,40 +284,59 @@ class TextInterpreter:
         return self._call_llm(prompt)
 
  
-    
-    def _call_llm(self, prompt: str) -> str:
+    def _call_llm(self, prompt: str, **generation_params) -> str:
         """
-        Helper method to call the LLM with the given prompt.
+        Generate a response from the LLM with the given prompt.
         
         Args:
-            prompt (str): Input prompt for the LLM.
-            
+            prompt: Input text for the model
+            **generation_params: Additional parameters for text generation
+                (max_tokens, temperature, etc.)
+                
         Returns:
-            str: LLM's response.
+            The generated text response
+            
+        Raises:
+            RuntimeError: If there's an error during generation
         """
         try:
-            # Generate text
-            inputs1 = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
-            input_ids1 = inputs1["input_ids"]
-
-            with torch.inference_mode():
-                outputs1 = self.model.generate(
-                    **inputs1,
-                    max_new_tokens=512,
-                    do_sample=True,
-                    temperature=0.9,
-                    top_p=1,
-                    eos_token_id=self.tokenizer.eos_token_id,
-                )
-
-            # Get only the newly generated tokens (after the input prompt)
-            new_tokens1 = outputs1[0][input_ids1.shape[1]:]
-
-            # Decode only the new tokens
-            response = self.tokenizer.decode(new_tokens1, skip_special_tokens=True)
-
-            return response
+            if self.tokenizer:
+                return self._generate_local(prompt, **generation_params)
+            return self._generate_openai(prompt, **generation_params)
         except Exception as e:
-            raise Exception(f"Error calling LLM: {e}")
+            raise RuntimeError(f"Text generation failed: {str(e)}") from e
+
+    def _generate_local(self, prompt: str, **kwargs) -> str:
+        """Generate text using local HuggingFace model."""
+        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+        
+        generation_params = {
+            'max_new_tokens': kwargs.get('max_new_tokens', 512),
+            'do_sample': kwargs.get('do_sample', True),
+            'temperature': kwargs.get('temperature', 0.9),
+            'top_p': kwargs.get('top_p', 1.0),
+            'eos_token_id': self.tokenizer.eos_token_id,
+            **kwargs
+        }
+        
+        with torch.inference_mode():
+            outputs = self.model.generate(**inputs, **generation_params)
+            
+        return self.tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
+
+    def _generate_openai(self, prompt: str, **kwargs) -> str:
+        """Generate text using OpenAI API."""
+        response = self.model.chat.completions.create(
+            model=kwargs.get('model', "meta-llama/llama-3.1-70b-instruct"),
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=kwargs.get('temperature', 0.7),
+            max_tokens=kwargs.get('max_tokens', 512)
+        )
+        return response.choices[0].message.content
+    
+
 
 
