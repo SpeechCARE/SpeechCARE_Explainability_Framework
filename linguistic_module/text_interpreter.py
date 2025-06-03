@@ -5,73 +5,94 @@ import torch
 import numpy as np
 import json
 
-# Define interpretations and directions for each feature
-metric_interpretations = {
-    'Content_Density': "Higher = more informative speech; Lower = vague or empty content",
-    'Part_of_Speech_rate': "Higher = greater syntactic richness; Lower = limited structure use",
-    'Reference_Rate_to_Reality': "Higher = more concrete reference; Lower = vague or abstract reference",
-    'Relative_pronouns_rate': "Higher = more complex syntax; Lower = simplified sentence structure",
-    'Negative_adverbs_rate': "Higher = more negation/adversity expressed; may signal emotional tone or confusion",
-    'Filler words': "Higher = more hesitation/disfluency; Lower = fluent delivery",
-    'word_count': "Higher = more elaboration or verbosity; Lower = minimal content",
-    'Lexical frequency': "Higher = use of common/simple words; Lower = rarer or more diverse vocabulary",
-    'Speech rate': "Higher = fluent/pressured speech; Lower = slowed/circumlocutory delivery",
-    'Filler rate': "Higher = frequent disfluency; Lower = smooth flow",
-    'rate_basis': "Contextual rate baseline; interpret in combination with speech rate",
-    'Definite_articles': "Higher = specific reference; overuse may reflect compensation or reduced naming ability",
-    'Indefinite_articles': "Higher = vague/general reference; may reflect word-finding issues",
-    'Pronouns': "Higher = less specific reference; may indicate reduced lexical access",
-    'Nouns': "Higher = more object/subject specificity; Lower = lexical retrieval difficulty",
-    'Verbs': "Higher = syntactic action richness; Lower = sentence simplification",
-    'Determiners': "Higher = more grammatical structure; Lower = syntactic degradation",
-    'Content words': "Higher = richer expression; Lower = vague or incoherent discourse",
-    'Consecutive repeated clauses': "Higher = perseveration or reduced working memory; Lower = fluent speech",
-    'Type-Token Ratio (TTR)': "Higher = more lexical variety; Lower = repetitive vocabulary",
-    'Root Type-Token Ratio (RTTR)': "Higher = more lexical variety (normalized); Lower = reduced richness",
-    'Corrected Type-Token Ratio (CTTR)': "Higher = richer vocabulary; Lower = simplified lexicon",
-    'Word count': "Higher = elaborated response; Lower = terse or minimal output",
-    'Unique Word count': "Higher = lexical diversity; Lower = redundancy or retrieval failure",
-    'Ratio unique word count to total word count': "Higher = richer vocabulary; Lower = repetition",
-    "Brunet's Index": "Lower = more lexical richness; Higher = limited vocabulary",
-    "Honoré's Statistic": "Higher = greater lexical variety; Lower = limited vocabulary",
-    'Measure of Textual Lexical Diversity': "Higher = diverse vocabulary; Lower = redundancy",
-    'Hypergeometric Distribution Diversity': "Higher = high lexical variation; Lower = limited expression"
-}
+system_prompt4 = """
+        You are a specialized language model trained to detect linguistic cues of cognitive impairment. You will receive:
+        1) A text passage.
+        2) Two separate interpretations of that text:
+        - One based on token-level SHAP values.
+        - One based on predefined linguistic features and their relation to cognitive impairment.
+
+        Your task is to:
+        - Carefully read both interpretations.
+        - Resolve any contradictions or inconsistencies using logical reasoning.
+        - Synthesize the two into a single, coherent explanation focused on how the text may reflect healthy or impaired cognition.
+        - If conflicts arise, prioritize the explanation most consistent with known linguistic markers of cognitive decline.
+
+        Your output must be structured as **bullet points**, each describing one key aspect of the combined interpretation relevant to cognitive impairment.
+
+        ---
+        ## Text to Analyze:
+        {text}
+
+        ---
+        ## SHAP-Based Interpretation:
+        {shap_interpretation}
+
+        ---
+        ## Linguistic Feature-Based Interpretation:
+        {feature_interpretation}
+
+        ---
+        ## Combined Analysis:
+        """
 
 system_prompt3 = """ 
-    Now you will receive a set of linguistic features to consider and you need to refine your previous response accordingly.
+    You are a specialized language model trained to detect linguistic cues of cognitive impairment. You will receive:
+    1) A text passage to analyze.
+    2) A detailed explanation of some linguistic features, grouped into four main categories, and their relevance to cognitive impairment.
+    3) The linguistic features values from the text.
 
-      
-    ---
-    ## Linguistic Features to Consider:
-    • Lexical Richness: Captured by Type-Token Ratio (TTR), Root TTR, Corrected TTR, Brunet's Index, Honoré's Statistic, MTLD, HDD, and Ratio of Unique to Total Word Count. Lower values may suggest limited vocabulary or word retrieval deficits common in ADRD.
-
-    • Syntactic Complexity: Informed by Part_of_Speech_rate, Relative_pronouns_rate, Determiners, Verbs, and use of complex forms like Relative Pronouns. Declines may reflect grammatical simplification.
-
-    • Sentence Length and Structure: Approximated by Word count, Unique Word count, and Consecutive repeated clauses. Short or repetitive sentence structures can indicate working memory or planning issues.
-
-    • Repetition: Directly captured by Consecutive repeated clauses. High rates may suggest perseveration or reduced cognitive flexibility.
-
-    • Disfluencies and Fillers: Measured by Filler words and Filler rate. Higher usage may reflect hesitation, planning difficulty, or word-finding trouble.
-
-    • Semantic Coherence and Content Density: Based on Content_Density and Reference_Rate_to_Reality. Lower content density or vague references can indicate impaired semantic organization.
-
-    • Referential Clarity and Pronoun Use: Captured by Pronouns, Definite_articles, Indefinite_articles, and Reference_Rate_to_Reality. Overuse of pronouns or poor reference to specific entities may indicate trouble maintaining discourse cohesion.
-
-    ---
-
-    ## Previous Response:
-    {previous_response}
-
-    ----
-    ## Linguistic Features:
-    {linguistic_features}
-
-    ---
-    You must refine your previous response using the linguistic features based on:
+    You must analyze the given text and the Linguistic Features based on:
     Synthesize the significance of provided features to explain how they collectively point to healthy cognition or potential cognitive impairment.
     Ensure that the explanations are concise, insightful, and relevant to cognitive impairment assessment.
     Output should be structured as **bullet points**, with each bullet clearly describing one key aspect of the analysis. 
+
+    ---
+    ## Text to Analyze:
+    {text}
+
+    ---
+    ## Detailed Explanation Linguistic Features:
+    • Lexical Richness: Reduced vocabulary diversity may reflect word-finding difficulties and lexical retrieval deficits common in ADRD.
+        •• Type-Token Ratio (TTR): (0-1) LOW: limited vocab; HIGH: diverse vocab
+        •• Root Type-Token Ratio (RTTR): (0-1) LOW: simple vocab; HIGH: varied vocab
+        •• Corrected Type-Token Ratio (CTTR): (0-1) LOW: restricted vocab; HIGH: rich vocab
+        •• Brunet's Index: (~10-100) LOW: diverse; HIGH: limited vocab
+        •• Honoré's Statistic: (~0-2000) LOW: low richness; HIGH: high richness
+        •• Measure of Textual Lexical Diversity (MTLD): (~10-150) LOW: limited vocab; HIGH: stable diversity
+        •• Hypergeometric Distribution Diversity (HDD): (0-1) LOW: low diversity; HIGH: diverse vocab
+        •• Ratio unique word count to total word count: (0-1) LOW: repetition; HIGH: variety
+        •• Unique Word count: (10-∞) LOW: restricted vocab; HIGH: lexical richness
+        •• Lexical frequency: (0-∞) LOW: rare words; HIGH: frequent/common words
+        •• Content words ratio: (0-1) LOW: vague; HIGH: info-rich
+
+    • Syntactic Complexity: Simplified grammar and reduced structural variety may signal cognitive decline affecting sentence planning.
+        •• Part_of_Speech_rate: (0-1) LOW: reduced variation; HIGH: balanced grammar
+        •• Relative_pronouns_rate: (0-1) LOW: simple syntax; HIGH: complex clauses
+        •• Determiners Ratio: (0-1) LOW: vague; HIGH: clear reference
+        •• Verbs Ratio: (0-1) LOW: static speech; HIGH: dynamic structure
+        •• Nouns Ratio: (0-1) LOW: low content; HIGH: info-dense
+        •• Negative_adverbs_rate: (0-1) LOW: less negation; HIGH: complex expression
+        •• Word count: (10-∞) LOW: brevity; HIGH: verbosity/planning
+
+    • Disfluencies and Repetition: Frequent hesitations, fillers, or repeated phrases may reflect planning difficulties and reduced cognitive flexibility.
+        •• Filler words: (0-∞) LOW: fluent; HIGH: hesitation
+        •• Filler rate: (0-1) LOW: smooth flow; HIGH: planning issues
+        •• Speech rate: (wpm) LOW: slowed cognition; HIGH: normal/pressured
+        •• Consecutive repeated clauses count: (0-∞) LOW: flexible; HIGH: perseveration
+
+    • Semantic Coherence and Referential Clarity: Vague references and reduced cohesion may indicate impaired semantic organization and discourse tracking.
+        •• Content_Density: (0-1) LOW: vague; HIGH: info-rich
+        •• Reference_Rate_to_Reality: (0-∞) LOW: abstract; HIGH: concrete info
+        •• Pronouns Ratio: (0-1) LOW: specific; HIGH: ambiguous
+        •• Definite_articles Ratio: (0-1) LOW: vague; HIGH: specific reference
+        •• Indefinite_articles Ratio: (0-1) LOW: specific; HIGH: general
+
+
+    ----
+    ## Linguistic Features Values:
+    {linguistic_features}
+
     ---
     ## Analysis:
 """
@@ -79,17 +100,17 @@ system_prompt1 = """
     You are a specialized language model trained to detect linguistic cues of cognitive impairment. You will receive:
     1) A text passage to analyze.
     2) Token-level SHAP values from a pre-trained model.
+
+    You must analyze the given text and the shap values based on:
+    Synthesize the significance of provided tokens/features to explain how they collectively point to healthy cognition or potential cognitive impairment.
+    Ensure that the explanations are concise, insightful, and relevant to cognitive impairment assessment.
+    Output should be structured as **bullet points**, with each bullet clearly describing one key aspect of the analysis. 
   
     ## Text to Analyze:
     {text}
     ---
     ## Token-level SHAP Values:
-    {shap_values}
-    ---
-    You must analyze the given text and the shap values based on:
-    Synthesize the significance of provided tokens/features to explain how they collectively point to healthy cognition or potential cognitive impairment.
-    Ensure that the explanations are concise, insightful, and relevant to cognitive impairment assessment.
-    Output should be structured as **bullet points**, with each bullet clearly describing one key aspect of the analysis. 
+    {shap_values}    
     ---
     ## Analysis:
     
@@ -159,7 +180,7 @@ class TextInterpreter:
         
         return token_value_pairs
    
-    def analyze_cognitive_impairment(self, transcription: str, shap_values: Union[Dict, List],shap_index:int) -> str:
+    def SHAP_values_interpretation(self, transcription: str, shap_values: Union[Dict, List],shap_index:int) -> str:
         """
         Generates the initial linguistic analysis using the provided transcription and SHAP values.
         
@@ -180,35 +201,34 @@ class TextInterpreter:
         response = self._call_llm(prompt)
         return prompt, response
     
-    def refine_analysis(
-        self, 
-        previous_response: str, 
-        refinement_metrics: Dict[str, float]
-    ) -> str:
+    def combine_interpretation(self, transcription: str,shap_interpretation: str,feature_interpretation: str ) -> str:
+
+        prompt = system_prompt4.format(text=transcription, shap_interpretation=shap_interpretation, feature_interpretation=feature_interpretation)
+        
+        # Call the LLM
+        response = self._call_llm(prompt)
+        return prompt, response
+    
+    def linguistic_features_interpretation(self, transcription: str,linguistic_features: Dict[str, float]) -> str:
         """
-        Refine the previous analysis using precomputed linguistic/cognitive metrics.
+        Generates the linguistic analysis using the provided transcription and linguistic features.
         
         Args:
-            previous_response (str): LLM's previous analysis of the text.
-            refinement_metrics (Dict[str, float]): Precomputed metrics for the text.
-                Example: {'lexical_richness': 0.5, 'syntactic_complexity': 0.7}
-                - Values are scores (e.g., 0.5 = low lexical richness, 0.9 = high).
-                
+            transcription (str): Text to analyze
+            linguistic features: linguistic features for interpretation
+            
         Returns:
-            str: Refined analysis incorporating the metrics.
+            str: The generated analysis text
         """
-       
-
-        # Format the metrics with interpretation
-        metrics_description = "\n".join(
-            [f"- {metric.replace('_', ' ').title()}: {value} → {metric_interpretations.get(metric, 'No interpretation available')}"
-            for metric, value in refinement_metrics.items()]
+        features = "\n".join(
+            [f"- {metric.replace('_', ' ').title()}: {value}"
+            for metric, value in linguistic_features.items()]
         )
-
+        prompt = system_prompt3.format(text=transcription, linguistic_features=features)
         
-        input_message = system_prompt3.format(previous_response=previous_response, linguistic_features=metrics_description)
-        
-        return input_message, self._call_llm(input_message)
+        # Call the LLM
+        response = self._call_llm(prompt)
+        return prompt, response 
     
     def prep_prompt_summarize(self,generated_text):
         content = system_prompt2.format(generated_text=generated_text)

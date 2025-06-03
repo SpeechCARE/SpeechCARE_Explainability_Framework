@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+         body {
+            background-color: #E5F1F3;
+            font-size: 1em;
+            font-family: Arial, Helvetica, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        .title{
+            color: #1E3658;
+            padding: 8rem 0 2rem 0;
+
+        }
+        .chart-container {
+            width: 80%;
+            margin: 20px auto;
+            font-family: Arial, sans-serif;
+        }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .feature-name {
+            width: 150px;
+            text-align: left;
+            padding-right: 10px;
+            /* font-weight: bold; */
+        }
+        .bar-container {
+            flex-grow: 1;
+            height: 30px;
+            background-color: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .bar {
+            height: 100%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            box-sizing: border-box;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+        }
+        .value-label {
+            width: 50px;
+            padding-left: 10px;
+            text-align: right;
+        }
+        #chart{
+            border-bottom: 2px solid #1E3658;
+        }
+        .heading{
+            display: flex;
+            flex-direction: row;
+            align-content: center;
+            align-items: center;
+            justify-content: center;
+            gap: 10rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="heading">
+        <h1 class="title">20 Most Important Factors in Cognitive Impairment Diagnosis</h1>
+        <img id="pieChart" src="../data/pie_chart.png" alt="pie chart of the modality contribution">
+         <!-- <div class="pie_chart">
+            <img id="pieChart" src="../data/pie_chart.png" alt="pie chart of the modality contribution">
+        </div> -->
+    </div>
+    
+    <div class="chart-container" id="chart"></div>
+
+    <script>
+        // Sample data - replace with your actual dictionary
+        const featureData = {
+            "Repetitive speech patterns": { value: 95, color: "#1E3658" },
+            "Vague semantic content": { value: 90, color: "#1E3658" },
+            "Insomnia & depression": { value: 87, color: "#488279" },
+            "Low education (≤ high school)": { value: 85, color: "#EA9370" },
+            "Speech disfluency (fillers)": { value: 82, color: "#1E3658" },
+            "Social isolation (no caregiver)": { value: 70, color: "#EA9370" },
+            "Monotonous segments in speech": { value: 68, color: "#1E3658" },
+            "Financial insecurity": { value: 65, color: "#EA9370" },
+            "Low education (≤ high school)": { value: 53, color: "#EA9370" },
+            "High homocysteine": { value: 50, color: "#488279" },
+            "Vitamin B12 deficiency": { value: 44, color: "#488279" },
+            "Sedentary lifestyle": { value: 41, color: "#EA9370" },
+
+            "Low Energy in Speech": { value: 39, color: "#1E3658" },
+            "Informative pauses": { value: 32, color: "#1E3658" },
+            "Voice shimmer variability": { value: 18, color: "#1E3658" },
+
+            "High HbA1c": { value: 10, color: "#488279" },
+            "Food insecurity": { value: 8, color: "#1E3658" },
+            "Insomnia & depression": { value: 8, color: "#488279" },
+            "Post-nephrectomy history": { value: 7, color: "#488279" },
+            "Medication: Xanax": { value: 3, color: "#488279" },
+            "Normal F0 coordination": { value: 3, color: "#1E3658" },
+            "Family history of diabetes": { value: 2, color: "#488279" }
+        };
+
+        // Convert to array and sort in descending order
+        const sortedFeatures = Object.entries(featureData)
+            .map(([name, {value, color}]) => ({name, value, color}))
+            .sort((a, b) => b.value - a.value);
+
+        // Create the chart
+        const chartContainer = document.getElementById('chart');
+        
+        sortedFeatures.forEach(feature => {
+            const row = document.createElement('div');
+            row.className = 'bar-row';
+            
+            const nameLabel = document.createElement('div');
+            nameLabel.className = 'feature-name';
+            nameLabel.textContent = feature.name;
+            
+            const barContainer = document.createElement('div');
+            barContainer.className = 'bar-container';
+            
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.width = `${feature.value}%`;
+            bar.style.backgroundColor = feature.color;
+            // bar.textContent = feature.value;
+            
+            const valueLabel = document.createElement('div');
+            valueLabel.className = 'value-label';
+            valueLabel.textContent = feature.value;
+            
+            barContainer.appendChild(bar);
+            row.appendChild(nameLabel);
+            row.appendChild(barContainer);
+            // row.appendChild(valueLabel);
+            chartContainer.appendChild(row);
+        });
+    </script>
+</body>
+</html>

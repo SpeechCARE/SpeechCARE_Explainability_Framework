@@ -191,7 +191,29 @@
             padding: 1rem; 
             margin: 1rem 0;
         }
+        .consideration .banner{
+            background-color: #5c6879;
+        }
+        .consideration {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+
+        }
         
+        .consideration p{
+            width: 100%;
+            text-align: left;
+            padding: 20px;
+            font-weight: 600;
+            
+        }
+
+        .consideration .info_box{
+            width: 90%;
+        }
+       
     </style>
 </head>
 <body>
@@ -233,7 +255,7 @@
                     <div class="signif_items" id="significantFactors">
                         <!-- Will be filled by JavaScript -->
                     </div>
-                    <div class="more_info"><a href="">See 20 most important factors ...</a></div>
+                    <div class="more_info"><a href="../dashboard/sinificant_features.html">See 20 most important factors ...</a></div>
                 </div>
                 <div class="audio_box">
                     <div class="title">Listen to the audio!</div>
@@ -277,8 +299,31 @@
             </div>
         </div>
     </div>
-    <div class="speech_explainability"></div>
-    <div class="consideration"></div>
+    <div class="speech_explainability container">
+        <div class="vertical_box">
+            <div class="banner">Speech Explainability<span id="expandItem"></span></div>
+            <div class="linguistic_explainability"></div>
+            <div class="acoustic_explainability"></div>
+            
+        </div>
+    </div>
+    <div class="consideration container">
+        <div class="vertical_box">
+            <div class="banner">Consideration</div>
+            <p>
+                Please be advised that the sensitivity of this system is not 100%. A more comprehensive
+            evaluation should include the individual's mediacal history and additional cognitive assessments.
+            </p> 
+            <div class="info_box border_full">
+                <div class="text_content">
+                    To reduce the risk of cognitive status, evidence-based studies suggested:
+                    <div><span class="bullet_point"></span>Having regular excercise</div>
+                    <div><span class="bullet_point"></span>Connecting with familty/community</div>
+                    <div><span class="bullet_point"></span>Limiting alcohol intake</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // JavaScript Section
@@ -378,35 +423,42 @@
             });
             
         }
-
         document.addEventListener('DOMContentLoaded', function() {
-            const expandItem = document.getElementById('expandItem');
-            const banner = document.querySelector('.clinical_sdoh .banner');
-            const contentBoxes = document.querySelectorAll('.clinical_sdoh .vertical_box > .info_box');
+            // Get all expandable sections
+            const expandableSections = document.querySelectorAll('.vertical_box');
             
-            // Set initial icon (plus)
-            expandItem.innerHTML = '➕'; // Unicode plus icon
-            
-            banner.addEventListener('click', function() {
-                const isExpanded = contentBoxes[0].classList.contains('expanded');
+            expandableSections.forEach(section => {
+                const banner = section.querySelector('.banner');
+                const expandItem = banner.querySelector('#expandItem');
+                const contentBoxes = section.querySelectorAll('.info_box, .linguistic_explainability, .acoustic_explainability');
                 
-                // Toggle expanded class on all content boxes
-                contentBoxes.forEach(box => {
-                    box.classList.toggle('expanded');
-                    void box.offsetHeight;
+                // Skip if no expand item found (sections that shouldn't be expandable)
+                if (!expandItem) return;
+                
+                // Set initial icon (plus)
+                expandItem.innerHTML = '➕'; // Unicode plus icon
+                
+                banner.addEventListener('click', function() {
+                    const isExpanded = contentBoxes[0] && contentBoxes[0].classList.contains('expanded');
+                    
+                    // Toggle expanded class on all content boxes in this section
+                    contentBoxes.forEach(box => {
+                        box.classList.toggle('expanded');
+                        void box.offsetHeight; // Trigger reflow
+                    });
+                    
+                    // Change icon based on state
+                    if (isExpanded) {
+                        expandItem.innerHTML = '➕'; // Plus icon when collapsed
+                        expandItem.style.transform = 'rotate(0deg)';
+                    } else {
+                        expandItem.innerHTML = '➖'; // Minus icon when expanded
+                        expandItem.style.transform = 'rotate(180deg)';
+                    }
                 });
-                
-                // Change icon based on state
-                if (isExpanded) {
-                    expandItem.innerHTML = '➕'; // Plus icon when collapsed
-                    expandItem.style.transform = 'rotate(0deg)';
-                } else {
-                    expandItem.innerHTML = '➖'; // Minus icon when expanded
-                    expandItem.style.transform = 'rotate(180deg)';
-                }
             });
         });
-
+       
         // Call the function when the page loads
         window.onload = populateData;
     </script>
