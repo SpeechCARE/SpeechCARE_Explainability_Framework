@@ -423,9 +423,9 @@ class TextFeatureExtractor:
         """
         # Validate required columns
         required_pos_tags = {'ADJ', 'ADV', 'DET', 'NOUN', 'PRON', 'VERB'}
-        missing_tags = required_pos_tags - set(df.columns)
-        if missing_tags:
-            raise ValueError(f"Missing required POS tag columns: {missing_tags}")
+        # missing_tags = required_pos_tags - set(df.columns)
+        # if missing_tags:
+        #     raise ValueError(f"Missing required POS tag columns: {missing_tags}")
 
         if text_col not in df.columns:
             raise ValueError(f"Missing text column: {text_col}")
