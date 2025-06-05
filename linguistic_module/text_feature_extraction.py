@@ -203,9 +203,14 @@ class TextFeatureExtractor:
         for tag in self.pos_tags['standard']:
             if tag in self.pos_tags['special_cases']:
                 # Handle special combined tags
-                combined_tag = sum(df[sub_tag] for sub_tag in self.pos_tags['special_cases'][tag]
-                                 if sub_tag in df.columns)
-                tag_rate = combined_tag / (combined_tag.sum() + 1e-10)  # Avoid division by zero
+                relevant_columns = [sub_tag for sub_tag in self.pos_tags['special_cases'][tag] if sub_tag in df.columns]
+                
+                if relevant_columns:  # Check if we found any matching columns
+                    combined_tag = df[relevant_columns].sum(axis=1)  # Sum across columns for each row
+                    print(combined_tag)
+                    tag_rate = combined_tag / (combined_tag.sum() + 1e-10)  # Avoid division by zero
+                else:
+                    tag_rate = pd.Series(0, index=df.index)  # Return zeros if no matching columns found
             else:
                 # Handle standard tags
                 if tag in df.columns:
