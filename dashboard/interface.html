@@ -1,66 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Patient Assessment Report</title>
     <style>
-        /* CSS Section */
-        body {
-            background-color: #E5F1F3;
-            font-size: 1em;
-            font-family: Arial, Helvetica, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
+        /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        .container{
+        
+        body {
+            background-color: #E5F1F3;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 1em;
+            line-height: 1.5;
+            color: #333;
+        }
+        
+        /* Layout Components */
+        .container {
             width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
         }
-        .banner{
-            width: 100%;
-            height: 45px;
-            background-color: #1E3658;
-            color: white;
-            font-size: 1.5rem;
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            padding: 1rem;
-            position: relative;
-            cursor: pointer;
-            user-select: none;
-            padding: 10px 15px;
-        }
-        .vertical_box{
+        
+        .vertical_box {
             width: 80%;
-            height: auto;
-            align-items: center;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            align-items: center;
         }
-        .border_bottom{
-            border-bottom: 2px solid #1E3658;
-        }
-        .border_full{
-            border: 2px solid #1E3658;
-        }
-        .border_right{
-            border-right: 2px solid #1E3658;
-        }
-        .vertical_divider {
-            border-right: 2px solid #1E3658;
-            height: 100%;
-        }
-        .horizontal_box{
+        
+        .horizontal_box {
             width: 100%;
             display: flex;
             flex-direction: row;
@@ -68,65 +43,112 @@
             padding: 1rem;
             gap: 1rem;
         }
-        .patient_profile{
-            display: flex;
-            flex-direction: row;
-            gap: 1.5rem;
-            align-items: center;
-            flex: 1;
+        
+        /* Borders */
+        .border_bottom {
+            border-bottom: 2px solid #1E3658;
         }
-        .patiant_info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        
+        .border_full {
+            border: 2px solid #1E3658;
         }
-        .modality_contrib img{
-            width: 250px;
-            height: auto;
+        
+        .border_right {
+            border-right: 2px solid #1E3658;
         }
-        .patient_profile img{
-            width: 120px;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-        .system_info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
+        
+        /* Typography */
         .title {
             font-weight: bold;
             font-size: 1.1rem;
             color: #1E3658;
             margin-bottom: 0.5rem;
         }
+        
+        .bold_txt {
+            font-weight: bold;
+            margin-right: 0.3rem;
+        }
+        
+        /* Banner Styles */
+        .banner {
+            width: 100%;
+            height: 45px;
+            background-color: #1E3658;
+            color: white;
+            font-size: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        
+        .consideration .banner {
+            background-color: #5c6879;
+        }
+        
+        /* Patient Profile */
+        .patient_profile {
+            display: flex;
+            flex-direction: row;
+            gap: 1.5rem;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .patient_profile img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .patiant_info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        /* System Info */
+        .system_info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
         .model_info {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
         }
-        .bold_txt {
-            font-weight: bold;
-            margin-right: 0.3rem;
+        
+        .modality_contrib img {
+            width: 250px;
+            height: auto;
         }
+        
+        /* Significant Factors */
         .signif_factors {
             flex: 1;
         }
+        
         .signif_items {
             display: flex;
             flex-direction: column;
             gap: 0.3rem;
         }
-       
+        
         .signif_item {
             display: flex;
             align-items: flex-start;
             margin-bottom: 0.5rem;
             line-height: 1.4;
         }
-
+        
         .bullet_point {
             display: inline-block;
             min-width: 8px;
@@ -136,95 +158,85 @@
             margin-right: 0.5rem;
             margin-top: 0.4rem;
         }
+        
+        /* Audio Box */
         .audio_box {
             flex: 1;
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
         }
+        
+        /* Info Box */
+        .info_box {
+            position: relative;
+            padding: 1rem;
+            margin: 1rem 0;
+            width: 100%;
+        }
+        
+        .box_title {
+            position: absolute;
+            top: -15px;
+            left: 15px;
+            color: #1E3658;
+            font-size: 1rem;
+            font-weight: 600;
+            background-color: #E5F1F3;
+            padding: 0 8px;
+            z-index: 3;
+        }
+        
+        /* Expandable Content */
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .collapsible-content.expanded {
+            max-height: 2000px;
+        }
+        
+        .expand-icon {
+            margin-left: 10px;
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+        
+        .expand-icon.expanded {
+            transform: rotate(90deg);
+        }
+        
+        /* Links */
         .more_info a {
             color: #1E3658;
             text-decoration: none;
             font-style: italic;
         }
+        
         .more_info a:hover {
             text-decoration: underline;
         }
-     
-        .info_box {
-            position: relative; /* Needed for absolute positioning of child */
-            padding: 1rem; /* Adjust as needed */
-            margin: 1rem 0;
-           
-        }
-
-        .info_box .box_title {
-            position: absolute;
-            top: -15px; /* Slightly reduced for better alignment */
-            left: 15px; /* Increased for better spacing */
-            color: #1E3658;
-            font-size: 1rem; /* Slightly smaller */
-            font-weight: 600;
-            background-color: #E5F1F3;
-            padding: 8px; 
-            z-index: 3; 
-            /* line-height: 1; */
-        }
-
-
-        #expandItem {
-            position: absolute;
-            right: 15px;
-            transition: transform 0.3s ease;
-        }
-
-        .clinical_sdoh .vertical_box > .info_box {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease;
-            padding: 0;
-            margin: 0;
-        }
-
-        .clinical_sdoh .vertical_box > .info_box.expanded {
-            max-height: 1000px; 
-            padding: 1rem; 
-            margin: 1rem 0;
-        }
-        .consideration .banner{
-            background-color: #5c6879;
-        }
-        .consideration {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: flex-start;
-
-        }
         
-        .consideration p{
+        /* Consideration Section */
+        .consideration p {
             width: 100%;
             text-align: left;
             padding: 20px;
             font-weight: 600;
-            
         }
-
-        .consideration .info_box{
-            width: 90%;
-        }
-       
     </style>
 </head>
 <body>
-    
+    <!-- Patient Heading Section -->
     <div class="heading container">
         <div class="vertical_box">
             <div class="banner"></div>
             <div class="horizontal_box border_bottom">
                 <div class="patient_profile">
                     <div class="patiant_image">
-                        <img id="profileImage" src="" alt="patient image">
+                        <img id="profileImage" src="" alt="Patient image">
                     </div>
                     <div class="patiant_info">
                         <h1 id="patientName"></h1>
@@ -243,7 +255,7 @@
                         <div class="modality_contrib">
                             <div class="title">Modality Contribution</div>
                             <div class="pie_chart">
-                                <img id="pieChart" src="" alt="pie chart of the modality contribution">
+                                <img id="pieChart" src="" alt="Pie chart of the modality contribution">
                             </div>
                         </div>
                     </div>
@@ -268,54 +280,73 @@
             </div>
         </div>
     </div>
+    
+    <!-- Clinical Factors and SDoH Section -->
     <div class="clinical_sdoh container">
         <div class="vertical_box">
-            <div class="banner">Clinical Factors and Social Determinants of Health (SDoH) <span id="expandItem"></span></div>
-            <div class="info_box border_full horizontal_box">
-                <span class="box_title">Clinical Factors</span>
-                <div class="patien_status border_right">
-                    <div class="titlle">
-                        Patient's Status: 
+            <div class="banner">Clinical Factors and Social Determinants of Health (SDoH) <span class="expand-icon">▼</span></div>
+            <div class="collapsible-content">
+                <div class="info_box border_full horizontal_box">
+                    <span class="box_title">Clinical Factors</span>
+                    <div class="patien_status border_right">
+                        <div class="titlle">Patient's Status:</div>
+                        <div class="signif_items" id="patientStatus">
+                            <!-- Will be filled by JavaScript -->
+                        </div>
+                        <div class="more_info"><a href="">More Info...</a></div>
                     </div>
-                    <div class="signif_items" id="patientStatus">
-                        <!-- Will be filled by JavaScript -->
+                    <div class="lab_test">
+                        <div class="titlle">Lab Tests:</div>
+                        <div class="signif_items" id="labTests">
+                            <!-- Will be filled by JavaScript -->
+                        </div>
+                        <div class="more_info"><a href="">More Info...</a></div>
                     </div>
-                    <div class="more_info"><a href="">More Info...</a></div>
                 </div>
-                <div class="lab_test">
-                    <div class="titlle">
-                        Lab Tests: 
-                    </div>
-                    <div class="signif_items" id="labTests">
-                        <!-- Will be filled by JavaScript -->
-                    </div>
-                    <div class="more_info"><a href="">More Info...</a></div>
+                <div class="info_box border_full">
+                    <span class="box_title">SDoH</span>
+                    <div id="SDoH"></div>
+                    <div class="more_info"><a href="">More Info...</a></div>    
                 </div>
-            </div>
-            <div class="info_box border_full">
-                <span class="box_title">SDoH</span>
-                <div class="text_content" id="SDoH"></div>
-                <div class="more_info"><a href="">More Info...</a></div>    
             </div>
         </div>
     </div>
+    
+    <!-- Speech Explainability Section -->
     <div class="speech_explainability container">
         <div class="vertical_box">
-            <div class="banner">Speech Explainability<span id="expandItem"></span></div>
-            <div class="linguistic_explainability"></div>
-            <div class="acoustic_explainability"></div>
-            
+            <div class="banner">Speech Explainability <span class="expand-icon">▼</span></div>
+            <div class="collapsible-content">
+                <div class="linguistic_explainability">
+                    <div class="vertical_box">
+                        <div class="info_box border_full">
+                            <span class="box_title">Linguistic Module</span>
+                            <a href="../dashboard/evidence_linguistic.html">See the evidence</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="acoustic_explainability">
+                    <div class="vertical_box">
+                        <div class="info_box border_full">
+                            <span class="box_title">Acoustic Module</span>
+                            <a href="../dashboard/evidence_Acoustic.html">See the evidence</a>
+                        </div>
+                    </div>
+                </div>
+            </div>  
         </div>
     </div>
+    
+    <!-- Consideration Section -->
     <div class="consideration container">
         <div class="vertical_box">
             <div class="banner">Consideration</div>
             <p>
                 Please be advised that the sensitivity of this system is not 100%. A more comprehensive
-            evaluation should include the individual's mediacal history and additional cognitive assessments.
+                evaluation should include the individual's mediacal history and additional cognitive assessments.
             </p> 
             <div class="info_box border_full">
-                <div class="text_content">
+                <div>
                     To reduce the risk of cognitive status, evidence-based studies suggested:
                     <div><span class="bullet_point"></span>Having regular excercise</div>
                     <div><span class="bullet_point"></span>Connecting with familty/community</div>
@@ -326,7 +357,6 @@
     </div>
 
     <script>
-        // JavaScript Section
         // Sample data - replace with your actual data retrieval logic
         const data = {
             name: "Emily J.",
@@ -339,7 +369,6 @@
             pieChart: "../data/pie_chart.png",
             audioFile: "../data/qnvo.mp3",
             significantFactors: [
-                
                 "Memory issue manifested by frequent repetition of specific words.",
                 "Lack of semantic clarity in speech manifested by reliance on vague terms.",
                 "Insomnia and depression manifested as chief complaints.",
@@ -352,7 +381,8 @@
                 activeMedications: "Insulin",
                 pastMedicalHistory: "Status post nephrectomy",
                 familyHistory: "Diabetes Mellitus"
-            }, labTests: {
+            }, 
+            labTests: {
                 VitaminB12: "185 pg/mL",
                 TSH: "5.1 µIU/mL",
                 FreeT4: "0.7 ng/dL",
@@ -378,6 +408,7 @@
             document.getElementById('profileImage').src = data.profileImage;
             document.getElementById('pieChart').src = data.pieChart;
             document.getElementById('audioSource').src = data.audioFile;
+            
             // SDOH
             document.getElementById('SDoH').textContent = data.SDoH;
             
@@ -389,6 +420,7 @@
                 factorElement.innerHTML = `<span class="bullet_point"></span>${factor}`;
                 factorsContainer.appendChild(factorElement);
             });
+            
             // Patient Status
             const statusContainer = document.getElementById('patientStatus');
             const statusItems = [
@@ -405,6 +437,7 @@
                 itemElement.innerHTML = `<span class="bullet_point"></span>${item}`;
                 statusContainer.appendChild(itemElement);
             });
+            
             // Lab Tests
             const labTestsContainer = document.getElementById('labTests');
             const testsItems = [
@@ -421,46 +454,32 @@
                 itemElement.innerHTML = `<span class="bullet_point"></span>${item}`;
                 labTestsContainer.appendChild(itemElement);
             });
-            
         }
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get all expandable sections
-            const expandableSections = document.querySelectorAll('.vertical_box');
-            
-            expandableSections.forEach(section => {
-                const banner = section.querySelector('.banner');
-                const expandItem = banner.querySelector('#expandItem');
-                const contentBoxes = section.querySelectorAll('.info_box, .linguistic_explainability, .acoustic_explainability');
+
+        // Toggle collapsible sections
+       document.addEventListener('DOMContentLoaded', function() {
+            // Set up expand/collapse functionality
+            document.querySelectorAll('.banner').forEach(banner => {
+                const expandIcon = banner.querySelector('.expand-icon');
+                if (!expandIcon) return;
                 
-                // Skip if no expand item found (sections that shouldn't be expandable)
-                if (!expandItem) return;
+                const content = banner.parentElement.querySelector('.collapsible-content');
                 
-                // Set initial icon (plus)
-                expandItem.innerHTML = '➕'; // Unicode plus icon
+                // Initialize all as collapsed
+                content.classList.remove('expanded');
+                expandIcon.textContent = '▼';
+                expandIcon.classList.remove('expanded');
                 
                 banner.addEventListener('click', function() {
-                    const isExpanded = contentBoxes[0] && contentBoxes[0].classList.contains('expanded');
-                    
-                    // Toggle expanded class on all content boxes in this section
-                    contentBoxes.forEach(box => {
-                        box.classList.toggle('expanded');
-                        void box.offsetHeight; // Trigger reflow
-                    });
-                    
-                    // Change icon based on state
-                    if (isExpanded) {
-                        expandItem.innerHTML = '➕'; // Plus icon when collapsed
-                        expandItem.style.transform = 'rotate(0deg)';
-                    } else {
-                        expandItem.innerHTML = '➖'; // Minus icon when expanded
-                        expandItem.style.transform = 'rotate(180deg)';
-                    }
+                    const isExpanded = content.classList.toggle('expanded');
+                    expandIcon.classList.toggle('expanded');
+                    expandIcon.textContent = isExpanded ? '▲' : '▼';
                 });
             });
+            
+            // Populate data
+            populateData();
         });
-       
-        // Call the function when the page loads
-        window.onload = populateData;
     </script>
 </body>
 </html>

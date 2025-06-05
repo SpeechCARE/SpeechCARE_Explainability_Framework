@@ -23,13 +23,10 @@ import librosa
 class TextFeatureExtractor:
     """A modular class for extracting linguistic features from text."""
 
-    def __init__(self, text: str, audio_path: str):
+    def __init__(self):
         """
         Initialize with the input text.
 
-        Args:
-            text (str): Input text to analyze.
-            audio_path (str) : Path to the input audio file.
         """
 
         self.sia = SentimentIntensityAnalyzer()
@@ -44,15 +41,15 @@ class TextFeatureExtractor:
                 'CONJ': ["CCONJ", "SCONJ"]  # CONJ combines these tags
             }
         }
-        length_audio_file = librosa.get_duration(filename=audio_path)
-        self.df = pd.DataFrame({"uid" : [audio_path.split("/")[-1].split(".")[0]],"transcription":[text],"length_audio_file":[length_audio_file]})
-
-
+        
 
     # ----------------------
     # Core Text Processing Utilities
     # ----------------------
-    def preprocess(self, df_text: str) -> str:
+    def run_preprocess(self, text: str,audio_path: str) -> str:
+
+        length_audio_file = librosa.get_duration(filename=audio_path)
+        df_text = pd.DataFrame({"uid" : [audio_path.split("/")[-1].split(".")[0]],"transcription":[text],"length_audio_file":[length_audio_file]})
         # remove punctuation marks
         df_text['clean_text'] = df_text['transcription'].apply(lambda x: re.sub(r'http\S+', '', str(x)))
 
@@ -630,13 +627,17 @@ class TextFeatureExtractor:
     # ----------------------
     # Master Feature Extractor
     # ----------------------
-    def extract_all_features(self, save_path = None) -> Dict[str, float]:
+    def extract_all_features(self,text,audio_path, save_path = None) -> Dict[str, float]:
         """
         Run all feature extractors and return {feature_name: value}.
         Add new features to this dictionary!
+        
+        Args:
+            text (str): Input text to analyze.
+            audio_path (str) : Path to the input audio file.
 
         """
-        self.df = self.preprocess(deepcopy(self.df))
+        self.df = self.run_preprocess(text,audio_path)
         self.df = self.add_pos_features(deepcopy(self.df))
         self.df = self.add_tag_features(deepcopy(self.df))
         self.df = self.calculate_content_density(deepcopy(self.df))
