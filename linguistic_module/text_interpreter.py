@@ -101,13 +101,16 @@ system_prompt3 = """
 system_prompt1 = """
     You are a specialized language model trained to detect linguistic cues of cognitive impairment. You will receive:
     1) A set of linguistic features to consider.
-    2) A text passage to analyze.
-    3) Token-level SHAP values from a pre-trained model.
+    2) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
+    3) A pre-trained model’s prediction.
+    4) Token-level SHAP values from the model.
 
-    You must analyze the given text and the shap values based on:
-    Synthesize the significance of provided tokens/features to explain how they collectively point to healthy cognition or potential cognitive impairment.
-    Ensure that the explanations are concise, insightful, and relevant to cognitive impairment assessment.
-    Output should be structured as **bullet points**, with each bullet clearly describing one key aspect of the analysis. 
+    You must analyze the given text and the SHAP values based on:
+        Identify which linguistic features are present in the text.
+        Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction, supported by SHAP values.
+        For each feature, briefly assess its significance in the model’s decision (e.g., Feature significance: 6/10).
+        Ensure that the explanations are concise, insightful, and relevant to cognitive impairment assessment.
+        Output should be structured as bullet points, with each bullet clearly describing one key aspect of the analysis.
 
     ---
     ## Linguistic Features to Consider:
@@ -122,6 +125,10 @@ system_prompt1 = """
   
     ## Text to Analyze:
     {text}
+    ---
+
+    ## Model's Prediction:
+    {model_pred}
     ---
     ## Token-level SHAP Values:
     {shap_values}    
@@ -238,7 +245,7 @@ class TextInterpreter:
         shap_values_.values = shap_values_.values[0,:,shap_index]
         token_shap_pairs = self.format_shap_values(shap_values_) 
 
-        prompt = system_prompt1.format(text=transcription, shap_values=json.dumps(token_shap_pairs, indent=2))
+        prompt = system_prompt1.format(text=transcription, shap_values=json.dumps(token_shap_pairs, indent=2),model_pred=shap_index)
         
         # Call the LLM
         response = self._call_llm(prompt)
