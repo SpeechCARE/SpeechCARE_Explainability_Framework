@@ -172,6 +172,7 @@ class TextInterpreter:
             raise ValueError("Either model_path or openai_config must be provided")
             
         self.model, self.tokenizer = self._initialize_model(model_path, openai_config)
+        self.label_mapping = {0: "healthy", 1: "cognitive impairment", 2: "cognitive impairment"}
 
     def _initialize_model(self, 
                          model_path: Optional[str], 
@@ -245,7 +246,7 @@ class TextInterpreter:
         shap_values_.values = shap_values_.values[0,:,shap_index]
         token_shap_pairs = self.format_shap_values(shap_values_) 
 
-        prompt = system_prompt1.format(text=transcription, shap_values=json.dumps(token_shap_pairs, indent=2),model_pred=shap_index)
+        prompt = system_prompt1.format(text=transcription, shap_values=json.dumps(token_shap_pairs, indent=2),model_pred=self.label_mapping[shap_index])
         
         # Call the LLM
         response = self._call_llm(prompt)
