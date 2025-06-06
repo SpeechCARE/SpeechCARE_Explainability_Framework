@@ -100,13 +100,25 @@ system_prompt3 = """
 """
 system_prompt1 = """
     You are a specialized language model trained to detect linguistic cues of cognitive impairment. You will receive:
-    1) A text passage to analyze.
-    2) Token-level SHAP values from a pre-trained model.
+    1) A set of linguistic features to consider.
+    2) A text passage to analyze.
+    3) Token-level SHAP values from a pre-trained model.
 
     You must analyze the given text and the shap values based on:
     Synthesize the significance of provided tokens/features to explain how they collectively point to healthy cognition or potential cognitive impairment.
     Ensure that the explanations are concise, insightful, and relevant to cognitive impairment assessment.
     Output should be structured as **bullet points**, with each bullet clearly describing one key aspect of the analysis. 
+
+    ---
+    ## Linguistic Features to Consider:
+    • Lexical Richness: Vocabulary diversity, word-finding issues, or overuse of vague words.E.g., using “thing” or “stuff” instead of specific nouns.
+    • Syntactic Complexity: Simplified grammar, limited sentence structure, or grammatical errors.
+    • Disfluencies and Repetition: Frequent pauses, fillers (e.g., “um,” “uh”), or repeated words.
+    • Semantic Coherence: Vague references, disorganized ideas, or unclear meaning. E.g., “They’re doing something over there with it.”
+    • Difficulty with Spatial Reasoning and Visualization: Trouble describing where things are. E.g., “It’s next to... no, behind... or maybe in front of it.”
+    • Impaired Executive Function: Disorganized or off-topic speech, poor sequencing. E.g., Jumps between unrelated actions or events without completing ideas.
+    • Additional Feature: Placeholder for any other relevant marker (e.g., domain-specific terms).
+    ---
   
     ## Text to Analyze:
     {text}
