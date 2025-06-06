@@ -108,9 +108,9 @@ system_prompt1 = """
     You must analyze the given text and the SHAP values based on:
         Identify which linguistic features are present in the text.
         Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction, supported by SHAP values.
-        For each feature, briefly assess its significance in the model’s decision (e.g., Feature significance: 6/10).
-        Ensure that the explanations are concise, insightful, and relevant to cognitive impairment assessment.
-        Output should be structured as bullet points, with each bullet clearly describing one key aspect of the analysis.
+        Briefly rate the significance of each feature in the model’s decision (e.g., Feature significance: 6/10).
+        Follow the format and style of the provided analysis examples.
+        Keep your output concise, well-supported, insightful, and relevant to cognitive impairment assessment, using bullet points, with each point describing one key aspect of the analysis.
 
     ---
     ## Linguistic Features to Consider:
@@ -133,6 +133,17 @@ system_prompt1 = """
     ## Token-level SHAP Values:
     {shap_values}    
     ---
+
+    ## Analysis Examples:
+
+    - **Lexical Richness**: The speaker uses several vague terms like "thing" and "something," with few specific nouns. SHAP values for these vague words are moderately high (e.g., 0.038), suggesting that lexical ambiguity influenced the model.  
+    **(Feature significance: 7/10)**
+
+    - **Syntactic Complexity**: The text consists mostly of short, unconnected phrases (“Boy fall,” “She look”). The SHAP values for these tokens are relatively high, indicating the model associates simple syntax with impairment.  
+    **(Feature significance: 8/10)**
+
+    ---
+
     ## Analysis:
     
     """
