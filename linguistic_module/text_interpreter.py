@@ -125,24 +125,12 @@ system_prompt1 = """
     ## Text to Analyze:
     {text}
     ---
-
     ## Model's Prediction / Confidence:
     {model_pred} / {model_conf}
     ---
     ## Token-level SHAP Values:
     {shap_values}
     ---
-
-    ## Analysis Examples:
-
-    - **Lexical Richness**: The speaker uses several vague terms like "thing" and "something," with few specific nouns. SHAP values for these vague words are moderately high (e.g., 0.038), suggesting that lexical ambiguity influenced the model.
-    **(Feature significance: 7/10)**
-
-    - **Syntactic Complexity**: The text consists mostly of short, unconnected phrases (“Boy fall,” “She look”). The SHAP values for these tokens are relatively high, indicating the model associates simple syntax with impairment.
-    **(Feature significance: 8/10)**
-
-    ---
-
     ## Analysis:
 
     """
