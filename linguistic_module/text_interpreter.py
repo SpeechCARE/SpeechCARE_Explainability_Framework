@@ -38,8 +38,8 @@ system_prompt4 = """
         ## Combined Analysis:
         """
 
-system_prompt3 = """ 
-    You are a specialized language model trained to detect linguistic cues of cognitive impairment. You will receive:
+system_prompt3 = """
+    You are a specialized language model trained to detect linguistic cues of cognitive status. You will receive:
     1) A text passage to analyze.
     2) A detailed explanation of some linguistic features, grouped into four main categories, and their relevance to cognitive impairment.
     3) The linguistic features values from the text.
@@ -47,7 +47,7 @@ system_prompt3 = """
     You must analyze the given text and the Linguistic Features based on:
     Synthesize the significance of provided features to explain how they collectively point to healthy cognition or potential cognitive impairment.
     Ensure that the explanations are concise, insightful, and relevant to cognitive impairment assessment.
-    Output should be structured as **bullet points**, with each bullet clearly describing one key aspect of the analysis. 
+    Output should be structured as **bullet points**, with each bullet clearly describing one key aspect of the analysis.
 
     ---
     ## Text to Analyze:
@@ -99,18 +99,17 @@ system_prompt3 = """
     ## Analysis:
 """
 system_prompt1 = """
-    You are a specialized language model trained to detect linguistic cues of cognitive impairment. You will receive:
+    You are a specialized language model trained to detect linguistic cues of cognitive status. You will receive:
     1) A set of linguistic features to consider.
     2) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
-    3) A pre-trained model’s prediction.
+    3) A machine learning model’s prediction (healthy or cognitive impairment) and its confidence of that prediction.
     4) Token-level SHAP values from the model.
 
     You must analyze the given text and the SHAP values based on:
-        Identify which linguistic features are present in the text.
+        Briefly describe the given text in terms of the provided linguistic features (e.g., Lexical density: "...").
+        Include any other relevant linguistic feature that may be indicative of cognitive status (Additional Feature).
         Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction, supported by SHAP values.
-        Briefly rate the significance of each feature in the model’s decision (e.g., Feature significance: 6/10).
-        Follow the format and style of the provided analysis examples.
-        Keep your output concise, well-supported, insightful, and relevant to cognitive impairment assessment, using bullet points, with each point describing one key aspect of the analysis.
+        Keep your output concise, well-supported, insightful, and relevant to cognitive assessment, using bullet points, with each point describing one key aspect of the analysis.
 
     ---
     ## Linguistic Features to Consider:
@@ -122,30 +121,30 @@ system_prompt1 = """
     • Impaired Executive Function: Disorganized or off-topic speech, poor sequencing. E.g., Jumps between unrelated actions or events without completing ideas.
     • Additional Feature: Placeholder for any other relevant marker (e.g., domain-specific terms).
     ---
-  
+
     ## Text to Analyze:
     {text}
     ---
 
-    ## Model's Prediction:
-    {model_pred}
+    ## Model's Prediction / Confidence:
+    {model_pred} / {model_conf}
     ---
     ## Token-level SHAP Values:
-    {shap_values}    
+    {shap_values}
     ---
 
     ## Analysis Examples:
 
-    - **Lexical Richness**: The speaker uses several vague terms like "thing" and "something," with few specific nouns. SHAP values for these vague words are moderately high (e.g., 0.038), suggesting that lexical ambiguity influenced the model.  
+    - **Lexical Richness**: The speaker uses several vague terms like "thing" and "something," with few specific nouns. SHAP values for these vague words are moderately high (e.g., 0.038), suggesting that lexical ambiguity influenced the model.
     **(Feature significance: 7/10)**
 
-    - **Syntactic Complexity**: The text consists mostly of short, unconnected phrases (“Boy fall,” “She look”). The SHAP values for these tokens are relatively high, indicating the model associates simple syntax with impairment.  
+    - **Syntactic Complexity**: The text consists mostly of short, unconnected phrases (“Boy fall,” “She look”). The SHAP values for these tokens are relatively high, indicating the model associates simple syntax with impairment.
     **(Feature significance: 8/10)**
 
     ---
 
     ## Analysis:
-    
+
     """
 
 system_prompt2 = """
@@ -161,40 +160,40 @@ system_prompt2 = """
 
     ---
     ## Final Prediction and Key findingd:
-    
+
     """
 class TextInterpreter:
     """
     A class to interpret SHAP values and analyze text for cognitive impairment cues using an LLM.
     """
-    
+
     def __init__(self, model_path: Optional[str] = None, openai_config: Optional[Dict] = None):
         """
         Initialize the interpreter with either a local model or OpenAI API.
-        
+
         Args:
             model_path: Path to local HuggingFace model. If None, uses OpenAI.
             openai_config: Dictionary with 'api_key' and 'base_url' for OpenAI.
-            
+
         Raises:
             ValueError: If neither model_path nor openai_config is provided
         """
         if not model_path and not openai_config:
             raise ValueError("Either model_path or openai_config must be provided")
-            
+
         self.model, self.tokenizer = self._initialize_model(model_path, openai_config)
         self.label_mapping = {0: "healthy", 1: "cognitive impairment", 2: "cognitive impairment"}
 
-    def _initialize_model(self, 
-                         model_path: Optional[str], 
+    def _initialize_model(self,
+                         model_path: Optional[str],
                          openai_config: Optional[Dict]) -> Tuple[Union[AutoModelForCausalLM, OpenAI], Optional[AutoTokenizer]]:
         """
         Initializes and returns the language model and tokenizer.
-        
+
         Args:
             model_path: Path to local HuggingFace model
             openai_config: Configuration for OpenAI API
-            
+
         Returns:
             Tuple of (model, tokenizer). Tokenizer is None for OpenAI.
         """
@@ -207,11 +206,11 @@ class TextInterpreter:
             )
             tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
             return model, tokenizer
-            
+
         # OpenAI case
         if not openai_config.get('api_key'):
             raise ValueError("OpenAI config must include 'api_key'")
-            
+
         model = OpenAI(
             api_key=openai_config['api_key'],
             base_url=openai_config.get('base_url')
@@ -221,17 +220,17 @@ class TextInterpreter:
     def format_shap_values(self,shap_explanation):
         """
         Convert SHAP Explanation object to list of (token, SHAP value) pairs.
-        
+
         Args:
             shap_explanation: SHAP Explanation object
-            
+
         Returns:
             list: List of tuples in format (token, shap_value)
         """
         # Get tokens and values
         tokens = np.array(shap_explanation.data[0])  # Convert to numpy array if not already
         values = shap_explanation.values
-            
+
         # Create (token, value) pairs
         token_value_pairs = []
         for token, value in zip(tokens, values):
@@ -239,46 +238,46 @@ class TextInterpreter:
             # Handle scalar values (single classification) or arrays (multi-class)
             shap_value = float(value) if np.isscalar(value) else [float(v) for v in value]
             token_value_pairs.append((token_str, shap_value))
-        
+
         return token_value_pairs
-   
-    def SHAP_values_interpretation(self, transcription: str, shap_values: Union[Dict, List],shap_index:int) -> str:
+
+    def SHAP_values_interpretation(self, transcription: str, shap_values: Union[Dict, List],shap_index:int,model_conf:float) -> str:
         """
         Generates the initial linguistic analysis using the provided transcription and SHAP values.
-        
+
         Args:
             transcription (str): Text to analyze
             shap_values (Union[Dict, List]): SHAP values for interpretation
-            
+
         Returns:
             str: The generated analysis text
         """
         shap_values_ = shap_values
         shap_values_.values = shap_values_.values[0,:,shap_index]
-        token_shap_pairs = self.format_shap_values(shap_values_) 
+        token_shap_pairs = self.format_shap_values(shap_values_)
 
-        prompt = system_prompt1.format(text=transcription, shap_values=json.dumps(token_shap_pairs, indent=2),model_pred=self.label_mapping[shap_index])
-        
+        prompt = system_prompt1.format(text=transcription, shap_values=json.dumps(token_shap_pairs, indent=2),model_pred=self.label_mapping[shap_index],model_conf=model_conf)
+
         # Call the LLM
         response = self._call_llm(prompt)
         return prompt, response
-    
+
     def combine_interpretation(self, transcription: str,shap_interpretation: str,feature_interpretation: str ) -> str:
 
         prompt = system_prompt4.format(text=transcription, shap_interpretation=shap_interpretation, feature_interpretation=feature_interpretation)
-        
+
         # Call the LLM
         response = self._call_llm(prompt)
         return prompt, response
-    
+
     def linguistic_features_interpretation(self, transcription: str,linguistic_features: Dict[str, float]) -> str:
         """
         Generates the linguistic analysis using the provided transcription and linguistic features.
-        
+
         Args:
             transcription (str): Text to analyze
             linguistic features: linguistic features for interpretation
-            
+
         Returns:
             str: The generated analysis text
         """
@@ -287,11 +286,11 @@ class TextInterpreter:
             for metric, value in linguistic_features.items()]
         )
         prompt = system_prompt3.format(text=transcription, linguistic_features=features)
-        
+
         # Call the LLM
         response = self._call_llm(prompt)
-        return prompt, response 
-    
+        return prompt, response
+
     def prep_prompt_summarize(self,generated_text):
         content = system_prompt2.format(generated_text=generated_text)
         messages = [{"role": "user", "content": content}]
@@ -299,14 +298,14 @@ class TextInterpreter:
         prompt = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 
         return prompt
-    
+
     def generate_final_interpretation(self,analysis_text: str) -> str:
         """
         Generates a final interpretation based on the previous analysis of text.
-        
+
         Args:
             analysis_text (str): The initial analysis to summarize
-            
+
         Returns:
             str: The final prediction and summary
         """
@@ -314,19 +313,19 @@ class TextInterpreter:
 
         return self._call_llm(prompt)
 
- 
+
     def _call_llm(self, prompt: str, **generation_params) -> str:
         """
         Generate a response from the LLM with the given prompt.
-        
+
         Args:
             prompt: Input text for the model
             **generation_params: Additional parameters for text generation
                 (max_tokens, temperature, etc.)
-                
+
         Returns:
             The generated text response
-            
+
         Raises:
             RuntimeError: If there's an error during generation
         """
@@ -340,7 +339,7 @@ class TextInterpreter:
     def _generate_local(self, prompt: str, **kwargs) -> str:
         """Generate text using local HuggingFace model."""
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
-        
+
         generation_params = {
             'max_new_tokens': kwargs.get('max_new_tokens', 512),
             'do_sample': kwargs.get('do_sample', True),
@@ -349,10 +348,10 @@ class TextInterpreter:
             'eos_token_id': self.tokenizer.eos_token_id,
             **kwargs
         }
-        
+
         with torch.inference_mode():
             outputs = self.model.generate(**inputs, **generation_params)
-            
+
         return self.tokenizer.decode(outputs[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
 
     def _generate_openai(self, prompt: str, **kwargs) -> str:
@@ -367,7 +366,7 @@ class TextInterpreter:
             max_tokens=kwargs.get('max_tokens', 512)
         )
         return response.choices[0].message.content
-    
+
 
 
 
