@@ -102,14 +102,12 @@ system_prompt1 = """
     You are a specialized language model trained to detect linguistic cues of cognitive status. You will receive:
     1) A set of linguistic features to consider.
     2) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
-    3) A machine learning model’s prediction (healthy or cognitive impairment) and its confidence of that prediction.
+    3) A machine learning model’s prediction (healthy or cognitive impairment) and its confidence of that prediction. 
     4) Token-level SHAP values from the model.
 
-    You must analyze the given text and the SHAP values based on:
-        Briefly describe the given text in terms of the provided linguistic features (e.g., Lexical density: "...").
-        Include any other relevant linguistic feature that may be indicative of cognitive status (Additional Feature).
-        Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction, supported by SHAP values.
-        Keep your output concise, well-supported, insightful, and relevant to cognitive assessment, using bullet points, with each point describing one key aspect of the analysis.
+    You must analyze the given text and the SHAP values and briefly describe the text in terms of the provided linguistic features.
+    Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction, supported by SHAP values, referencing SHAP values when relevant.
+    Keep your output concise, well-supported, insightful, and relevant to cognitive assessment, using bullet points, with each point describing one key aspect of the analysis.
 
     ---
     ## Linguistic Features to Consider:
@@ -119,7 +117,7 @@ system_prompt1 = """
     • Semantic Coherence: Vague references, disorganized ideas, or unclear meaning. E.g., “They’re doing something over there with it.”
     • Difficulty with Spatial Reasoning and Visualization: Trouble describing where things are. E.g., “It’s next to... no, behind... or maybe in front of it.”
     • Impaired Executive Function: Disorganized or off-topic speech, poor sequencing. E.g., Jumps between unrelated actions or events without completing ideas.
-    • Additional Feature: Placeholder for any other relevant marker (e.g., domain-specific terms).
+    • Additional Feature: Include any other relevant linguistic feature that may be indicative of cognitive status.
     ---
 
     ## Text to Analyze:
@@ -201,7 +199,8 @@ class TextInterpreter:
 
         model = OpenAI(
             api_key=openai_config['api_key'],
-            base_url=openai_config.get('base_url')
+            base_url=openai_config.get('base_url'),
+            max_tokens= 4096 
         )
         return model, None
 
