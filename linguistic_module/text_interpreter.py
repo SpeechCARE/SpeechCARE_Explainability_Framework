@@ -108,7 +108,7 @@ system_prompt1 = """
     1) A set of linguistic features to consider.
     2) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
     3) A machine learning model’s prediction (healthy or cognitive impairment) and its confidence of that prediction. 
-    4) Token-level SHAP values, where each value indicates the contribution of that token to the model’s prediction.
+    4) Positive Token-level SHAP values, where each value indicates the contribution of that token to the model’s prediction (None if there is no contribution).
 
     You must analyze the given text and the SHAP values and briefly describe the text in terms of the provided linguistic features.
     Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction, supported by SHAP values, referencing SHAP values when relevant.
@@ -355,7 +355,7 @@ class TextInterpreter:
                 {"role": "user", "content": prompt}
             ],
             temperature=kwargs.get('temperature', 0.7),
-            max_tokens=kwargs.get('max_tokens', 512)
+            max_tokens=kwargs.get('max_tokens', 2048)
         )
         return response.choices[0].message.content
 
