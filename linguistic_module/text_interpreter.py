@@ -262,7 +262,7 @@ class TextInterpreter:
         response = self._call_llm(prompt)
         return prompt, response
 
-    def linguistic_features_interpretation(self, transcription: str,linguistic_features: Dict[str, float]) -> str:
+    def linguistic_features_interpretation(self, transcription: str,linguistic_features: Dict[str, float],model_pred:int,model_conf:float ) -> str:
         """
         Generates the linguistic analysis using the provided transcription and linguistic features.
 
@@ -277,7 +277,7 @@ class TextInterpreter:
             [f"- {metric.replace('_', ' ').title()}: {value}"
             for metric, value in linguistic_features.items()]
         )
-        prompt = system_prompt3.format(text=transcription, linguistic_features=features)
+        prompt = system_prompt3.format(text=transcription, linguistic_features=features,model_pred=model_pred,model_conf=model_conf)
 
         # Call the LLM
         response = self._call_llm(prompt)
