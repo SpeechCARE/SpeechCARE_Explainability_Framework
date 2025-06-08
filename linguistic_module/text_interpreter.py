@@ -8,31 +8,30 @@ from openai import OpenAI
 import openai
 
 system_prompt4 = """
-    You are a specialized language model trained to detect linguistic cues of cognitive status. You will receive:
+    You are an expert language model designed to detect and interpret linguistic cues indicative of cognitive status from text. You will receive:
     1) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
-    2) Two separate interpretations of the text, based on six linguistic categories 
+    2) Two separate expert interpretations of the text, based on six linguistic categories
     (Lexical Richness, Syntactic Complexity, Disfluencies and Repetition, Semantic Coherence, Difficulty with Spatial Reasoning and Visualization, and Impaired Executive Function):
-    - One using token-level SHAP values (indicating each token's contribution to the model’s prediction), describing the text in terms of the six categories, with SHAP references where relevant.
-    - One based on detailed measurements of the first four categories, describing the text’s characteristics in each.
+    - One provides a qualitative interpretation across all six categories.
+    - The other includes detailed quantitative measurements for the first four categories.
 
     Your task is to:
-    - Carefully read both interpretations.
-    - Resolve any contradictions using logical reasoning, prioritizing the interpretation with stronger evidence from the text and greater consistency with known linguistic markers of cognitive status.
-    - Synthesize the two into a single analysis, coherent explanation focused on how the text may reflect healthy or impaired cognition.
+    - Carefully read both expert interpretations.
+    - Compare and evaluate them critically. If there are any contradictions, use logical reasoning to resolve them—prioritizing the interpretation that is more strongly supported by the textual evidence and aligns more consistently with known linguistic markers of cognitive status.
+    - Synthesize both sources into a unified, coherent analysis that explains how the linguistic features of the passage may reflect healthy or impaired cognition.
 
-
-    Your output must be structured as **bullet points**, each describing one key aspect of the analysis relevant to cognitive impairment.
+    Your output must be structured as **bullet points**, each describing one key aspect of the analysis relevant to cognitive status.
 
     ---
     ## Text to Analyze:
     {text}
 
     ---
-    ## SHAP-Based Interpretation:
+    ## First Interpretation:
     {shap_interpretation}
 
     ---
-    ## Linguistic Categories Interpretation:
+    ## Second Interpretation:
     {feature_interpretation}
 
     ---
@@ -107,11 +106,10 @@ system_prompt1 = """
     You are a specialized language model trained to detect linguistic cues of cognitive status. You will receive:
     1) A set of linguistic features to consider.
     2) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
-    3) A machine learning model’s prediction (healthy or cognitive impairment) and its confidence of that prediction. 
-    4) Positive Token-level SHAP values, where each value indicates the contribution of that token to the model’s prediction (None if there is no contribution).
-
-    You must analyze the given text and the SHAP values and briefly describe the text in terms of the provided linguistic features.
-    Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction, supported by SHAP values, referencing SHAP values when relevant.
+    3) A machine learning model’s prediction (healthy or cognitive impairment) and its confidence of that prediction.
+    
+    You must analyze the given text and briefly describe the text in terms of the provided linguistic features.
+    Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction.
     Keep your output concise, well-supported, insightful, and relevant to cognitive assessment, using bullet points, with each point describing one key aspect of the analysis.
 
     ---
@@ -130,9 +128,6 @@ system_prompt1 = """
     ---
     ## Model's Prediction / Confidence:
     {model_pred} / {model_conf}
-    ---
-    ## Token-level SHAP Values:
-    {shap_values}
     ---
     ## Analysis:
 
@@ -228,7 +223,7 @@ class TextInterpreter:
             token_str = str(token)
             # Handle scalar values (single classification) or arrays (multi-class)
             shap_value = float(value) if np.isscalar(value) else [float(v) for v in value]
-            shap_value = str(shap_value) if shap_value > 0 else '' 
+            shap_value = str(shap_value) if shap_value > 0 else ''
             token_value_pairs.append((token_str, shap_value))
 
         return token_value_pairs
@@ -248,7 +243,8 @@ class TextInterpreter:
         shap_values_.values = shap_values_.values[0,:,shap_index]
         token_shap_pairs = self.format_shap_values(shap_values_)
 
-        prompt = system_prompt1.format(text=transcription, shap_values=json.dumps(token_shap_pairs, indent=2),model_pred=self.label_mapping[shap_index],model_conf=model_conf)
+        # prompt = system_prompt1.format(text=transcription, shap_values=json.dumps(token_shap_pairs, indent=2),model_pred=self.label_mapping[shap_index],model_conf=model_conf)
+        prompt = system_prompt1.format(text=transcription,model_pred=self.label_mapping[shap_index],model_conf=model_conf)
 
         # Call the LLM
         response = self._call_llm(prompt)
