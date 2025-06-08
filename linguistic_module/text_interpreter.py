@@ -8,54 +8,51 @@ from openai import OpenAI
 import openai
 
 system_prompt4 = """
-        You are a specialized language model trained to detect linguistic cues of cognitive impairment. You will receive:
-        1) A text passage.
-        2) Two separate interpretations of that text:
-        - One based on token-level SHAP values.
-        - One based on predefined linguistic features and their relation to cognitive impairment.
-
-        Your task is to:
-        - Carefully read both interpretations.
-        - Resolve any contradictions or inconsistencies using logical reasoning.
-        - Synthesize the two into a single, coherent explanation focused on how the text may reflect healthy or impaired cognition.
-        - If conflicts arise, prioritize the explanation most consistent with known linguistic markers of cognitive decline.
-
-        Your output must be structured as **bullet points**, each describing one key aspect of the combined interpretation relevant to cognitive impairment.
-
-        ---
-        ## Text to Analyze:
-        {text}
-
-        ---
-        ## SHAP-Based Interpretation:
-        {shap_interpretation}
-
-        ---
-        ## Linguistic Feature-Based Interpretation:
-        {feature_interpretation}
-
-        ---
-        ## Combined Analysis:
-        """
-
-system_prompt3 = """
     You are a specialized language model trained to detect linguistic cues of cognitive status. You will receive:
-    1) A text passage to analyze.
-    2) A detailed explanation of some linguistic features, grouped into four main categories, and their relevance to cognitive impairment.
-    3) The linguistic features values from the text.
+    1) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
+    2) Two separate interpretations of the text, based on six linguistic categories 
+    (Lexical Richness, Syntactic Complexity, Disfluencies and Repetition, Semantic Coherence, Difficulty with Spatial Reasoning and Visualization, and Impaired Executive Function):
+    - One using token-level SHAP values (indicating each token's contribution to the model’s prediction), describing the text in terms of the six categories, with SHAP references where relevant.
+    - One based on detailed measurements of the first four categories, describing the text’s characteristics in each.
 
-    You must analyze the given text and the Linguistic Features based on:
-    Synthesize the significance of provided features to explain how they collectively point to healthy cognition or potential cognitive impairment.
-    Ensure that the explanations are concise, insightful, and relevant to cognitive impairment assessment.
-    Output should be structured as **bullet points**, with each bullet clearly describing one key aspect of the analysis.
+    Your task is to:
+    - Carefully read both interpretations.
+    - Resolve any contradictions using logical reasoning, prioritizing the interpretation with stronger evidence from the text and greater consistency with known linguistic markers of cognitive status.
+    - Synthesize the two into a single analysis, coherent explanation focused on how the text may reflect healthy or impaired cognition.
+
+
+    Your output must be structured as **bullet points**, each describing one key aspect of the analysis relevant to cognitive impairment.
 
     ---
     ## Text to Analyze:
     {text}
 
     ---
+    ## SHAP-Based Interpretation:
+    {shap_interpretation}
+
+    ---
+    ## Linguistic Categories Interpretation:
+    {feature_interpretation}
+
+    ---
+    ## Analysis:
+    """
+
+system_prompt3 = """
+   You are a specialized language model trained to detect linguistic cues of cognitive status. You will receive:
+    1) A detailed explanation of some linguistic features, grouped into four main categories, and their relevance to cognitive status.
+    2) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
+    3) A machine learning model’s prediction (healthy or cognitive impairment) and its confidence of that prediction.
+    4) The linguistic features values calculated from the text.
+
+    You must analyze the given text and the Linguistic Features and briefly describe the text in terms of the provided linguistic features.
+    Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction, supported by values of the relevant linguistic features.
+    Keep your output concise, well-supported, insightful, and relevant to cognitive assessment, using bullet points, with each point describing one key aspect of the analysis.
+
+    ---
     ## Detailed Explanation Linguistic Features:
-    • Lexical Richness: Reduced vocabulary diversity may reflect word-finding difficulties and lexical retrieval deficits common in ADRD.
+    • Lexical Richness: Reduced vocabulary diversity may reflect word-finding difficulties and lexical retrieval deficits.
         •• Type-Token Ratio (TTR): (0-1) LOW: limited vocab; HIGH: diverse vocab
         •• Root Type-Token Ratio (RTTR): (0-1) LOW: simple vocab; HIGH: varied vocab
         •• Corrected Type-Token Ratio (CTTR): (0-1) LOW: restricted vocab; HIGH: rich vocab
@@ -90,13 +87,21 @@ system_prompt3 = """
         •• Definite_articles Ratio: (0-1) LOW: vague; HIGH: specific reference
         •• Indefinite_articles Ratio: (0-1) LOW: specific; HIGH: general
 
+    ---
+    ## Text to Analyze:
+    {text}
+    ---
 
-    ----
+    ## Model's Prediction / Confidence:
+    {model_pred} / {model_conf}
+    ---
+
     ## Linguistic Features Values:
     {linguistic_features}
 
     ---
     ## Analysis:
+
 """
 system_prompt1 = """
     You are a specialized language model trained to detect linguistic cues of cognitive status. You will receive:
