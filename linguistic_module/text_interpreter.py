@@ -228,7 +228,7 @@ class TextInterpreter:
             token_str = str(token)
             # Handle scalar values (single classification) or arrays (multi-class)
             shap_value = float(value) if np.isscalar(value) else [float(v) for v in value]
-            shap_values = [str(value) if value > 0 else '' for value in shap_values]
+            shap_value = str(shap_value) if shap_value > 0 else '' 
             token_value_pairs.append((token_str, shap_value))
 
         return token_value_pairs
