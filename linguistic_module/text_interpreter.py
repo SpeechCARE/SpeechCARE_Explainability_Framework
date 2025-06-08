@@ -103,7 +103,7 @@ system_prompt1 = """
     1) A set of linguistic features to consider.
     2) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
     3) A machine learning model’s prediction (healthy or cognitive impairment) and its confidence of that prediction. 
-    4) Token-level SHAP values from the model, where each value indicates the contribution of that token to the predicted class.
+    4) Token-level SHAP values, where each value indicates the contribution of that token to the model’s prediction.
 
     You must analyze the given text and the SHAP values and briefly describe the text in terms of the provided linguistic features.
     Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction, supported by SHAP values, referencing SHAP values when relevant.
