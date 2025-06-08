@@ -103,7 +103,7 @@ system_prompt1 = """
     1) A set of linguistic features to consider.
     2) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
     3) A machine learning model’s prediction (healthy or cognitive impairment) and its confidence of that prediction. 
-    4) Token-level SHAP values from the model.
+    4) Token-level SHAP values from the model, where each value indicates the contribution of that token to the predicted class.
 
     You must analyze the given text and the SHAP values and briefly describe the text in terms of the provided linguistic features.
     Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction, supported by SHAP values, referencing SHAP values when relevant.
@@ -199,8 +199,7 @@ class TextInterpreter:
 
         model = OpenAI(
             api_key=openai_config['api_key'],
-            base_url=openai_config.get('base_url'),
-            max_tokens= 4096 
+            base_url=openai_config.get('base_url')
         )
         return model, None
 
@@ -224,6 +223,7 @@ class TextInterpreter:
             token_str = str(token)
             # Handle scalar values (single classification) or arrays (multi-class)
             shap_value = float(value) if np.isscalar(value) else [float(v) for v in value]
+            shap_values = [str(value) if value > 0 else '' for value in shap_values]
             token_value_pairs.append((token_str, shap_value))
 
         return token_value_pairs
