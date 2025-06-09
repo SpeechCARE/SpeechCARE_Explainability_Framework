@@ -10,10 +10,11 @@ import openai
 system_prompt4 = """
     You are an expert language model designed to detect and interpret linguistic cues indicative of cognitive status from text. You will receive:
     1) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
-    2) Two separate expert interpretations of the text, based on six linguistic categories
+    2) A machine learning model’s prediction (healthy or cognitive impairment) and its confidence of that prediction.
+    3) Two separate expert interpretations of the text, based on six linguistic categories
     (Lexical Richness, Syntactic Complexity, Disfluencies and Repetition, Semantic Coherence, Difficulty with Spatial Reasoning and Visualization, and Impaired Executive Function):
-    - One provides a qualitative interpretation across all six categories.
-    - The other includes detailed quantitative measurements for the first four categories.
+    - The first one provides a qualitative interpretation across all six categories.
+    - The second one includes detailed quantitative measurements for the first four categories.
 
     Your task is to:
     - Carefully read both expert interpretations.
@@ -25,7 +26,9 @@ system_prompt4 = """
     ---
     ## Text to Analyze:
     {text}
-
+    ---
+    ## Model's Prediction / Confidence:
+    {model_pred} / {model_conf}
     ---
     ## First Interpretation:
     {shap_interpretation}
@@ -74,8 +77,6 @@ system_prompt3 = """
         •• Word count: (10-∞) LOW: brevity; HIGH: verbosity/planning
 
     • Disfluencies and Repetition: Frequent hesitations, fillers, or repeated phrases may reflect planning difficulties and reduced cognitive flexibility.
-        •• Filler words: (0-∞) LOW: fluent; HIGH: hesitation
-        •• Filler rate: (0-1) LOW: smooth flow; HIGH: planning issues
         •• Speech rate: (wpm) LOW: slowed cognition; HIGH: normal/pressured
         •• Consecutive repeated clauses count: (0-∞) LOW: flexible; HIGH: perseveration
 
@@ -107,7 +108,7 @@ system_prompt1 = """
     1) A set of linguistic features to consider.
     2) A text passage to analyze (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
     3) A machine learning model’s prediction (healthy or cognitive impairment) and its confidence of that prediction.
-    
+
     You must analyze the given text and briefly describe the text in terms of the provided linguistic features.
     Use logical reasoning to explain how these features contribute (or do not contribute) to the model’s prediction.
     Keep your output concise, well-supported, insightful, and relevant to cognitive assessment, using bullet points, with each point describing one key aspect of the analysis.
@@ -134,18 +135,32 @@ system_prompt1 = """
     """
 
 system_prompt2 = """
-    Based on the the long analysis of detecting cognitive impairment, provide the following:
-    Write the final prediction regarding the detection of cognitive impairment in **one short sentence**.
-    Summarize the key findings and their implications in **bullet points**, without using the "Title: description" format.
-    Do not provide any additional or extra explanations and points.
-    **Avoid saying anything about SHAP values and Giving Suggestions for further analysis**
-    **Do not repeat yourself**
+    You are an expert language model designed to detect and interpret linguistic cues indicative of cognitive status from text.You will receive:
+    1) A text passage (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
+    2) A detailed analysis of the text across six linguistic categories (Lexical Richness, Syntactic Complexity, Disfluencies and Repetition, Semantic Coherence, Difficulty with Spatial Reasoning and Visualization, and Impaired Executive Function).
+    3) A machine learning model’s prediction (healthy or cognitively impaired) and its confidence score.
+
+    Your task is to:
+    - Read the analysis carefully.
+    - Identify the four linguistic categories that most strongly support the model’s prediction.
+    - Summarize these four categories and their implications in **bullet point**s, without using the "Title: description" format.
+    - For each bullet point, include specific **examples or evidence from the text** to support it.
+    - Write the final prediction (healthy or cognitively impaired) in **one short sentence**.
+
+    **Do not add extra explanations or points.**
+    **Avoid referencing any quantitative measurements from the text or offering suggestions for further analysis.**
+    **Do not repeat yourself.**
+    ---
+    ## Text Passage:
+    {text}
     ---
     ## Long Analysis:
-    {generated_text}
-
+    {analysis_text}
     ---
-    ## Final Prediction and Key findingd:
+    ## Model's Prediction / Confidence:
+    {model_pred} / {model_conf}
+    ---
+    ## Final Prediction and Key findings:
 
     """
 class TextInterpreter:
@@ -250,9 +265,9 @@ class TextInterpreter:
         response = self._call_llm(prompt)
         return prompt, response
 
-    def combine_interpretation(self, transcription: str,shap_interpretation: str,feature_interpretation: str ) -> str:
+    def combine_interpretation(self, transcription: str,shap_interpretation: str,feature_interpretation: str,model_pred:int,model_conf:float) -> str:
 
-        prompt = system_prompt4.format(text=transcription, shap_interpretation=shap_interpretation, feature_interpretation=feature_interpretation)
+        prompt = system_prompt4.format(text=transcription, shap_interpretation=shap_interpretation, feature_interpretation=feature_interpretation,model_pred=self.label_mapping[model_pred],model_conf=model_conf)
 
         # Call the LLM
         response = self._call_llm(prompt)
@@ -273,7 +288,7 @@ class TextInterpreter:
             [f"- {metric.replace('_', ' ').title()}: {value}"
             for metric, value in linguistic_features.items()]
         )
-        prompt = system_prompt3.format(text=transcription, linguistic_features=features,model_pred=model_pred,model_conf=model_conf)
+        prompt = system_prompt3.format(text=transcription, linguistic_features=features,model_pred=self.label_mapping[model_pred],model_conf=model_conf)
 
         # Call the LLM
         response = self._call_llm(prompt)
@@ -287,7 +302,7 @@ class TextInterpreter:
 
         return prompt
 
-    def generate_final_interpretation(self,analysis_text: str) -> str:
+    def generate_final_interpretation(self,transcription:str,analysis_text: str,model_pred:int,model_conf:float) -> str:
         """
         Generates a final interpretation based on the previous analysis of text.
 
@@ -297,9 +312,10 @@ class TextInterpreter:
         Returns:
             str: The final prediction and summary
         """
-        prompt= self.prep_prompt_summarize(analysis_text)
+        # prompt= self.prep_prompt_summarize(analysis_text)
+        prompt= system_prompt2.format(text=transcription , analysis_text=analysis_text,model_pred=self.label_mapping[model_pred],model_conf=model_conf )
 
-        return self._call_llm(prompt)
+        return prompt,self._call_llm(prompt)
 
 
     def _call_llm(self, prompt: str, **generation_params) -> str:
