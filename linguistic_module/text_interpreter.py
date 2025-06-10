@@ -316,6 +316,59 @@ class TextInterpreter:
         prompt= system_prompt2.format(text=transcription , analysis_text=analysis_text,model_pred=self.label_mapping[model_pred],model_conf=model_conf )
 
         return prompt,self._call_llm(prompt)
+    
+    def get_all_interpretations(self,transcription,predicted_label, shap_values, features, probabilities):
+        """
+        Runs all interpretation steps and returns their results.
+        
+        Args:
+            shap_values: SHAP values for interpretation
+            features: Linguistic features for interpretation
+            probabilities: Model confidence probabilities
+            
+        Returns:
+            tuple: (prompt1, shap_interp, 
+                prompt2, ling_interp, 
+                prompt3, combined_interp, 
+                prompt4, final_interp)
+        """
+        # SHAP values interpretation
+        prompt1, shap_interp = self.SHAP_values_interpretation(
+            transcription=transcription,
+            shap_values=shap_values,
+            shap_index=predicted_label,
+            model_conf=probabilities[predicted_label]
+        )
+        
+        # Linguistic features interpretation
+        prompt2, ling_interp = self.linguistic_features_interpretation(
+            transcription=transcription,
+            linguistic_features=features,
+            model_pred=predicted_label,
+            model_conf=probabilities[predicted_label]
+        )
+        
+        # Combined interpretation
+        prompt3, combined_interp = self.combine_interpretation(
+            transcription=transcription,
+            shap_interpretation=shap_interp,
+            feature_interpretation=ling_interp,
+            model_pred=predicted_label,
+            model_conf=probabilities[predicted_label]
+        )
+        
+        # Final interpretation
+        prompt4, final_interp = self.generate_final_interpretation(
+            transcription=transcription,
+            analysis_text=combined_interp,
+            model_pred=predicted_label,
+            model_conf=probabilities[predicted_label]
+        )
+        
+        return (prompt1, shap_interp,
+                prompt2, ling_interp,
+                prompt3, combined_interp,
+                prompt4, final_interp)
 
 
     def _call_llm(self, prompt: str, **generation_params) -> str:
