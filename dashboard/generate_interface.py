@@ -2,8 +2,6 @@ import pandas as pd
 from openai import OpenAI
 import re
 import base64
-
-
 system_prompt_sdh_report = """
     You are a clinical language model designed to generate coherent and concise patient summaries based on Social Determinants of Health (SDOH). You will receive:
     1) A structured dictionary containing key SDOH items related to a specific patient.
@@ -14,6 +12,7 @@ system_prompt_sdh_report = """
     - Use a clinical tone that is clear and factual.
     - Do not list items mechanically or use bullet points—integrate them into full sentences.
     - Avoid repeating key terms unnecessarily.
+    - **Bold the important points** in the summary for emphasis.
 
     Refer to the example below to guide your writing style:
 
@@ -31,7 +30,7 @@ system_prompt_sdh_report = """
     }}
     ---
     ## Example Output Report:
-    Patient has a high school diploma, reports financial issues, difficulty accessing prescribed medications, smokes two packs/day, leads a sedentary lifestyle, faces transportation barriers to medical services, has low access to nutritious food (e.g., vegetables), and reports access to caregivers.
+    Patient has a **high school diploma**, reports **financial issues**, **difficulty accessing prescribed medications**, **smokes two packs/day**, leads a **sedentary lifestyle**, faces **transportation barriers to medical services**, has **low access to nutritious food (e.g., vegetables)**, and reports **access to caregivers**.
     ---
 
     Now generate a similar report for the following input:
@@ -90,7 +89,7 @@ def generate_interface(
     SDoH = read_excel_data(SDoH_path)
 
     SDoH = generate_SDoH_text(SDoH,openai_config)
-    print(SDoH)
+    # print(SDoH)
     significantFactors = [
         "Memory issue manifested by frequent repetition of specific words.",
         "Lack of semantic clarity in speech manifested by reliance on vague terms.",
@@ -137,7 +136,25 @@ def generate_html_report(
 ):
     
    
-
+    def markdown_bold_to_html(text):
+        """
+        Converts text with **bold** markdown to HTML with <strong> tags
+        Example: "This is **important**" → "This is <strong>important</strong>"
+        """
+        # Split the text into parts alternating between normal and bold
+        parts = text.split('**')
+        
+        # Rebuild with HTML tags (odd indexes are bold)
+        html_content = []
+        for i, part in enumerate(parts):
+            if i % 2 == 1:  # Odd index = bold section
+                html_content.append(f'<strong>{part}</strong>')
+            else:
+                html_content.append(part)
+        
+        # Wrap in a div for better HTML structure
+        return f'<div class="sdoh-text">{"".join(html_content)}</div>'
+    
     # Helper function to format keys
     def format_key(key):
         # Add space before capital letters and numbers
@@ -146,6 +163,9 @@ def generate_html_report(
         formatted = formatted.title()                            # Capitalize first letter of each word
         formatted = re.sub(r'\s+', ' ', formatted).strip()       # Normalize multiple spaces and trim
         return formatted
+    
+
+    SDoH = markdown_bold_to_html(SDoH)
    
     # Generate Patient Status HTML
     patient_status_html = []
