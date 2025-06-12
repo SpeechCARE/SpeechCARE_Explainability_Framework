@@ -1,4 +1,3 @@
-
 import pandas as pd
 from openai import OpenAI
 import re
@@ -268,8 +267,26 @@ css_style = f"""
             max-width: 400px;
         }}
 
+        .module-subsection-content .signif_items .signif_item {{
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }}
+
+        .module-subsection-content .bullet_point {{
+            display: inline-block;
+            min-width: 6px;  /* Reduced from 8px */
+            height: 6px;     /* Reduced from 8px */
+            background-color: #1E3658;
+            border-radius: 50%;
+            margin-right: 8px;
+            margin-top: 7px;  /* Adjusted for better vertical alignment */
+            flex-shrink: 0;   /* Prevents bullet from shrinking */
+        }}
+
 """
-system_prompt_sdh_report = f"""
+system_prompt_sdh_report = """
     You are a clinical language model designed to generate coherent and concise patient summaries based on Social Determinants of Health (SDOH). You will receive:
     1) A structured dictionary containing key SDOH items related to a specific patient.
     2) A clinical note containing unstructured observations or patient-reported concerns.
@@ -288,20 +305,20 @@ system_prompt_sdh_report = f"""
     ---
     ## Example Input Dictionary:
     {{
-        "education": "high school diploma",
-        "financial_status": "financial issues",
-        "medication_access": "difficulty accessing prescribed medications",
-        "smoking": "smokes two packs/day",
-        "physical_activity": "sedentary lifestyle",
-        "transportation": "transportation barriers to medical services",
-        "food_access": "low access to nutritious food (e.g., vegetables)",
-        "caregiver": "access to caregivers",
-        "health_literacy": "somewhat confident filling out medical forms",
-        "insurance": "Medicaid",
-        "housing": "stable housing",
-        "employment": "unemployed",
-        "social_isolation": "often feels isolated",
-        "clinical_note": "The patient expressed concern about affording medication and mentioned they have no one to help with groceries or cooking. They also reported difficulty attending regular checkups due to unreliable transportation."
+        'education': 'high school diploma',
+        'financial_status': 'financial issues',
+        'medication_access': 'difficulty accessing prescribed medications',
+        'smoking': 'smokes two packs/day',
+        'physical_activity': 'sedentary lifestyle',
+        'transportation': 'transportation barriers to medical services',
+        'food_access': 'low access to nutritious food (e.g., vegetables)',
+        'caregiver': 'access to caregivers',
+        'health_literacy': 'somewhat confident filling out medical forms',
+        'insurance': 'Medicaid',
+        'housing': 'stable housing',
+        'employment': 'unemployed',
+        'social_isolation': 'often feels isolated',
+        'clinical_note': 'The patient expressed concern about affording medication and mentioned they have no one to help with groceries or cooking. They also reported difficulty attending regular checkups due to unreliable transportation.'
     }}
     ---
     ## Example Output Report:
@@ -313,10 +330,10 @@ system_prompt_sdh_report = f"""
 
     ---
     ## Structured SDOH items:
-    {{sdoh_dict}}
+    {sdoh_dict}
     ---
     ## Clinical Notes:
-    {{clinical_notes}}
+    {clinical_notes}
     ---
     ## Output Report:
 """
@@ -364,7 +381,7 @@ def extract_patient_data(df):
 
     # Define section markers
     sections = {
-        "Demographic Information": "Demographic information",
+        "Demographic Information": "Demographic Information",
         "Clinical History": "Clinical History",
         "Social Determinants of Health": "Social of determinant of Health",
         "Lab Tests": "Lab Tests",
@@ -390,19 +407,20 @@ def extract_patient_data(df):
     for section, (start, end) in boundaries.items():
         sub_df = df.iloc[start + 1:end].dropna(subset=['Section'])
         structured_data[section] = {
-            str(row['Section']).strip(): str(row['Value']).strip()
+            str(row['Section']).strip(): (
+                '' if pd.isna(row['Value']) 
+                else str(row['Value']).strip()
+            )
             for _, row in sub_df.iterrows()
-            if str(row['Section']).strip().lower() != 'nan'
-        }
-
+            if str(row['Section']).strip().lower() != 'nan'}
     return structured_data
 
-def read_excel_data(excel_path,id=None):
+def read_excel_sheet_data(excel_path,id=None):
     xls = pd.ExcelFile(excel_path, engine='openpyxl')
     df = pd.read_excel(xls, sheet_name=xls.sheet_names[0])
 
     new_df = pd.DataFrame({
-    'Section': ['Demographic information'] + df['Demographic information'].tolist(),
+    'Section': ['Demographic Information'] + df[df.columns[0]].tolist(),
     'Value': ['NaN'] + df[df.columns[1]].tolist()
     })
 
@@ -411,15 +429,14 @@ def read_excel_data(excel_path,id=None):
 
 def generate_interface(
         excel_path:str,
-        model_info_path:str,
+        model_info,
         openai_config,
         linguistic_interpretation=None,
         patient_id:str=None,
         transcription=None
 
     ):
-    data = extract_patient_data(read_excel_data(excel_path,patient_id))
-    model_info = read_excel_data(model_info_path)
+    data = extract_patient_data(read_excel_sheet_data(excel_path,patient_id))
 
     SDoH = generate_SDoH_text(data['Social Determinants of Health'],data['Clinical Notes']['Report:'],openai_config)
     profile = data['Demographic Information']
