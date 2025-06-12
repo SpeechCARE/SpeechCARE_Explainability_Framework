@@ -673,6 +673,15 @@ def generate_html_report(
                             </div>
                             <div class="child-content">
                                 <div class="info_box">
+                                    <!-- Transcription Subsection -->
+                                    <div class="module-subsection">
+                                        <div class="module-subsection-title">
+                                            Transcription
+                                        </div>
+                                        <div class="module-subsection-content" id="transcription">
+                                            {"".join(transcription)}
+                                        </div>
+                                    </div>
                                     <!-- Linguistic Interpretation Subsection -->
                                     <div class="module-subsection">
                                         <div class="module-subsection-title">
@@ -681,16 +690,6 @@ def generate_html_report(
                                         </div>
                                         <div class="module-subsection-content signif_items" id="ling_interpret">
                                             {"".join(ling_interpret_html)}
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Transcription Subsection -->
-                                    <div class="module-subsection">
-                                        <div class="module-subsection-title">
-                                            Transcription
-                                        </div>
-                                        <div class="module-subsection-content" id="transcription">
-                                            {"".join(transcription)}
                                         </div>
                                     </div>
                                 </div>
