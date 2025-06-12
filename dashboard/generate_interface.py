@@ -5,304 +5,268 @@ import re
 import base64
 
 css_style = f"""
-                * {{
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }}
+        * {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }}
 
-                body {{
-                    background-color: #E5F1F3;
-                    font-family: Arial, Helvetica, sans-serif;
-                    font-size: 1em;
-                    line-height: 1.5;
-                    color: #1E3658;
-                }}
-                
-                /* Layout Components */
-                .container{{
-                    width: 100%;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    flex-direction: column;
-                }}
+        body {{
+            background-color: #E5F1F3;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #1E3658;
+            padding: 20px 0;
+        }}
+        
+        /* Layout Components */
+        .container {{
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto 20px;
+        }}
 
-                .vertical_box {{
-                    width: 100%;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                }}
+        .vertical_box {{
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }}
 
-                .small_box{{
-                    width:80%;
-                }}
+        .horizontal_box {{
+            display: flex;
+            width: 100%;
+            gap: 30px;
+            padding: 15px 0;
+        }}
 
-                .horizontal_box {{
-                    width: 100%;
-                    display: flex;
-                    flex-direction: row;
-                    justify-content: space-between;
-                    padding: 1rem;
-                    gap: 2rem;
-                }}
+        /* Borders */
+        .border_bottom {{
+            border-bottom: 2px solid #1E3658;
+            padding-bottom: 15px;
+        }}
 
-                /* Borders */
-                .border_bottom {{
-                    border-bottom: 2px solid #1E3658;
-                }}
+        .border_full {{
+            border: 2px solid #1E3658;
+            border-radius: 4px;
+        }}
 
-                .border_full {{
-                    border: 2px solid #1E3658;
-                }}
+        .border_right {{
+            border-right: 2px solid #1E3658;
+            padding-right: 15px;
+        }}
 
-                .border_right {{
-                    border-right: 2px solid #1E3658;
-                }}
+        /* Typography */
+        .title {{
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #1E3658;
+            margin-bottom: 10px;
+        }}
 
-                /* Typography */
-                .title{{
-                    font-weight: bold;
-                    font-size: 1.1rem;
-                    color: #1E3658;
-                    margin-bottom: 0.5rem;
-                }}
+        .bold_txt {{
+            font-weight: bold;
+            margin-right: 5px;
+        }}
 
-                .bold_txt {{
-                    font-weight: bold;
-                    margin-right: 0.3rem;
-                }}
+        /* Banner Styles */
+        .banner {{
+            width: 100%;
+            height: 45px;
+            background-color: #1E3658;
+            color: white;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            cursor: pointer;
+            user-select: none;
+            border-radius: 4px 4px 0 0;
+        }}
 
-                /* Banner Styles */
-                .banner {{
-                    width: 100%;
-                    height: 45px;
-                    background-color: #1E3658;
-                    color: white;
-                    font-size: 1.5rem;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 10px 15px;
-                    cursor: pointer;
-                    user-select: none;
-                    position: relative;
-                }}
+        /* Patient Profile */
+        .patient_profile {{
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex: 1;
+        }}
 
-                .consideration .banner {{
-                    background-color: #1E3658;
-                    margin: 0.8rem 0 0 0;
-                }}
+        .patient_profile img {{
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+        }}
 
-                /* Patient Profile */
-                .patient_profile {{
-                    display: flex;
-                    flex-direction: row;
-                    gap: 1.5rem;
-                    align-items: center;
-                    flex: 1;
-                }}
+        .patiant_info {{
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }}
 
-                .patient_profile img {{
-                    width: 150px;
-                    height: 150px;
-                    object-fit: cover;
-                    border-radius: 8px;
-                }}
+        /* System Info */
+        .system_info {{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }}
 
-                .patiant_info {{
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.5rem;
-                }}
+        .model_info {{
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }}
 
-                /* System Info */
-                .system_info {{
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1rem;
-                }}
+        .modality_contrib img {{
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+        }}
 
-                .model_info {{
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.5rem;
-                }}
+        /* Significant Factors */
+        .signif_factors {{
+            flex: 1;
+        }}
 
-                .modality_contrib img {{
-                    width: 300px;
-                    height: auto;
-                }}
+        .signif_items {{
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }}
 
-                /* Significant Factors */
-                .signif_factors {{
-                    flex: 1;
-                }}
+        .signif_item {{
+            display: flex;
+            align-items: flex-start;
+            line-height: 1.4;
+        }}
 
-                .signif_items {{
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.3rem;
-                }}
+        .bullet_point {{
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #1E3658;
+            border-radius: 50%;
+            margin-right: 8px;
+            margin-top: 7px;
+        }}
 
-                .signif_item {{
-                    display: flex;
-                    align-items: flex-start;
-                    margin-bottom: 0.5rem;
-                    line-height: 1.4;
-                }}
+        /* Audio Box */
+        .audio_box {{
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }}
 
-                .bullet_point {{
-                    display: inline-block;
-                    min-width: 8px;
-                    height: 8px;
-                    background-color: #1E3658;
-                    border-radius: 50%;
-                    margin-right: 0.5rem;
-                    margin-top: 0.4rem;
-                }}
+        /* Info Box */
+        .info_box {{
+            position: relative;
+            padding: 20px;
+            margin: 20px 0;
+            width: 100%;
+        }}
 
-                /* Audio Box */
-                .audio_box {{
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.5rem;
-                }}
+        .box_title {{
+            position: absolute;
+            top: -12px;
+            left: 15px;
+            color: #1E3658;
+            font-size: 1rem;
+            font-weight: 600;
+            background-color: #E5F1F3;
+            padding: 0 8px;
+        }}
 
-                /* Info Box */
-                .info_box {{
-                    position: relative;
-                    padding: 1rem;
-                    margin: 1rem 0;
-                    width: 100%;
-                }}
+        /* Expandable Content */
+        .collapsible-content {{
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }}
 
-                .box_title {{
-                    position: absolute;
-                    top: -15px;
-                    left: 15px;
-                    color: #1E3658;
-                    font-size: 1rem;
-                    font-weight: 600;
-                    background-color: #E5F1F3;
-                    padding: 0 8px;
-                    z-index: 3;
-                }}
+        .collapsible-content.expanded {{
+            max-height: 2000px;
+        }}
 
-                /* Expandable Content */
-                .collapsible-content {{
-                    max-height: 0;
-                    overflow: hidden;
-                    transition: max-height 0.3s ease;
-                }}
+        .expand-icon {{
+            margin-left: 10px;
+            transition: transform 0.3s ease;
+        }}
 
-                .collapsible-content.expanded {{
-                    max-height: 2000px;
-                }}
+        /* Links */
+        .more_info a {{
+            color: #1E3658;
+            text-decoration: none;
+            font-style: italic;
+            display: inline-block;
+            margin-top: 10px;
+        }}
 
-                .expand-icon {{
-                    margin-left: 10px;
-                    transition: transform 0.3s ease;
-                    display: inline-block;
-                }}
+        .more_info a:hover {{
+            text-decoration: underline;
+        }}
 
-                .expand-icon.expanded {{
-                    transform: rotate(90deg);
-                }}
+        /* Consideration Section */
+        .consideration p {{
+            padding: 15px 0;
+            font-weight: 600;
+        }}
 
-                /* Links */
-                .more_info a {{
-                    color: #1E3658;
-                    text-decoration: none;
-                    font-style: italic;
-                }}
-
-                .more_info a:hover {{
-                    text-decoration: underline;
-                }}
-
-                /* Consideration Section */
-                .consideration p {{
-                    width: 100%;
-                    text-align: left;
-                    padding: 20px;
-                    font-weight: 600;
-                }}
-
-                /* Child expandable sections */
-                .child-banner {{
-                    width: 100%;
-                    height: 35px;
-                    background-color: #5c6879; /* Slightly lighter than parent */
-                    color: white;
-                    font-size: 1.2rem;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 10px 15px;
-                    cursor: pointer;
-                    user-select: none;
-                    position: relative;
-                    margin-top: 1rem;
-                    border-radius: 4px;
-                }}
-                
-                .child-content {{
-                    width: 100%;
-                    max-height: 0;
-                    overflow: hidden;
-                    transition: max-height 0.3s ease;
-                }}
-                
-                .child-content.expanded {{
-                    max-height: 2000px;
-                }}
-                
-                /* Module specific styles */
-                .linguistic-module {{
-                    width:100%;
-                }}
-                
-                .acoustic-module {{
-                    width:100%;
-                }}
-
-                .module-subsection {{
-                    width: 100%;
-                    margin-bottom: 1rem;
-                    padding: 1rem;
-                    border: 2px solid #1E3658;
-                    border-radius: 4px;
-                }}
-                
-                .module-subsection-title {{
-                    font-weight: bold;
-                    font-size: 1.1rem;
-                    color: #1E3658;
-                    margin-bottom: 0.8rem;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }}
-                
-                .module-subsection-content {{
-                    width: 100%;
-                }}
-                
-                /* Adjust existing styles */
-                .linguistic-module .info_box {{
-                    padding: 0; /* Remove default padding since subsections have their own */
-                    display: flex;
-                    flex-direction: column;
-                    gap: 1rem;
-                }}
-                
-                .linguistic-module .border_full {{
-                    border: none; /* We'll handle borders at subsection level */
-                }}
+        /* Child expandable sections */
+        .child-banner {{
+            width: 100%;
+            height: 40px;
+            background-color: #5c6879;
+            color: white;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            cursor: pointer;
+            user-select: none;
+            margin-top: 15px;
+            border-radius: 4px;
+        }}
+        
+        .child-content {{
+            width: 100%;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }}
+        
+        .child-content.expanded {{
+            max-height: 2000px;
+        }}
+        
+        /* Module specific styles */
+        .module-subsection {{
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 2px solid #1E3658;
+            border-radius: 4px;
+        }}
+        
+        .module-subsection-title {{
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #1E3658;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+        
+        /* Audio player styling */
+        audio {{
+            width: 100%;
+            max-width: 400px;
+        }}
 
 """
 system_prompt_sdh_report = """
@@ -553,8 +517,8 @@ def generate_html_report(
         </head>
         <body>
             <!-- Patient Heading Section -->
-            <div class="heading container">
-                <div class="vertical_box small_box">
+            <div class="container">
+                <div class="vertical_box">
                     <div class="banner"></div>
                     <div class="horizontal_box border_bottom">
                         <div class="patient_profile">
@@ -588,7 +552,7 @@ def generate_html_report(
                         <div class="signif_factors">
                             <div class="title">Significant Factors</div>
                             <div class="signif_items" id="significantFactors">
-                               {"".join(sig_factor_html)}
+                                {"".join(sig_factor_html)}
                             </div>
                             <div class="more_info"><a href="../dashboard/sinificant_features.html">See 20 most important factors ...</a></div>
                         </div>
@@ -606,21 +570,21 @@ def generate_html_report(
             </div>
 
             <!-- Clinical Factors and SDoH Section -->
-            <div class="clinical_sdoh container">
-                <div class="vertical_box small_box">
+            <div class="container">
+                <div class="vertical_box">
                     <div class="banner">Clinical Factors and Social Determinants of Health (SDoH) <span class="expand-icon">▼</span></div>
                     <div class="collapsible-content">
                         <div class="info_box border_full horizontal_box">
                             <span class="box_title">Clinical Factors</span>
                             <div class="patien_status border_right">
-                                <div class="titlle">Patient's Status:</div>
+                                <div class="title">Patient's Status:</div>
                                 <div class="signif_items" id="patientStatus">
-                                   {"".join(patient_status_html)}
+                                    {"".join(patient_status_html)}
                                 </div>
                                 <div class="more_info"><a href="">More Info...</a></div>
                             </div>
                             <div class="lab_test">
-                                <div class="titlle">Lab Tests:</div>
+                                <div class="title">Lab Tests:</div>
                                 <div class="signif_items" id="labTests">
                                     {"".join(lab_tests_html)}
                                 </div>
@@ -637,38 +601,36 @@ def generate_html_report(
             </div>
 
             <!-- Speech Explainability Section -->
-            <div class="speech_explainability container">
-                <div class="vertical_box small_box">
+            <div class="container">
+                <div class="vertical_box">
                     <div class="banner">Speech Explainability <span class="expand-icon">▼</span></div>
                     <div class="collapsible-content">
                         <!-- Linguistic Module -->
-                        <div class="linguistic_explainability linguistic-module">
+                        <div class="linguistic-module">
                             <div class="child-banner">
                                 Linguistic Module
                                 <span class="expand-icon">▼</span>
                             </div>
                             <div class="child-content">
-                                <div class="vertical_box">
-                                    <div class="info_box">
-                                        <!-- Linguistic Interpretation Subsection -->
-                                        <div class="module-subsection">
-                                            <div class="module-subsection-title">
-                                                Linguistic Interpretation
-                                                <a href="../dashboard/evidence_linguistic.html">See the evidence</a>
-                                            </div>
-                                            <div class="module-subsection-content signif_items" id="ling_interpret">
-                                                {"".join(ling_interpret_html)}
-                                            </div>
+                                <div class="info_box">
+                                    <!-- Linguistic Interpretation Subsection -->
+                                    <div class="module-subsection">
+                                        <div class="module-subsection-title">
+                                            Linguistic Interpretation
+                                            <a href="../dashboard/evidence_linguistic.html">See the evidence</a>
                                         </div>
-                                        
-                                        <!-- Transcription Subsection -->
-                                        <div class="module-subsection">
-                                            <div class="module-subsection-title">
-                                                Transcription
-                                            </div>
-                                            <div class="module-subsection-content" id="transcription">
-                                                {"".join(transcription)}
-                                            </div>
+                                        <div class="module-subsection-content signif_items" id="ling_interpret">
+                                            {"".join(ling_interpret_html)}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Transcription Subsection -->
+                                    <div class="module-subsection">
+                                        <div class="module-subsection-title">
+                                            Transcription
+                                        </div>
+                                        <div class="module-subsection-content" id="transcription">
+                                            {"".join(transcription)}
                                         </div>
                                     </div>
                                 </div>
@@ -676,16 +638,14 @@ def generate_html_report(
                         </div>
                         
                         <!-- Acoustic Module -->
-                        <div class="acoustic_explainability acoustic-module">
+                        <div class="acoustic-module">
                             <div class="child-banner">
                                 Acoustic Module
                                 <span class="expand-icon">▲</span>
                             </div>
                             <div class="child-content">
-                                <div class="vertical_box">
-                                    <div class="info_box border_full">
-                                        <a href="../dashboard/evidence_Acoustic.html">See the evidence</a>
-                                    </div>
+                                <div class="info_box border_full">
+                                    <a href="../dashboard/evidence_Acoustic.html">See the evidence</a>
                                 </div>
                             </div>
                         </div>
@@ -694,8 +654,8 @@ def generate_html_report(
             </div>
 
             <!-- Consideration Section -->
-            <div class="consideration container">
-                <div class="vertical_box small_box">
+            <div class="container">
+                <div class="vertical_box">
                     <div class="banner">Consideration</div>
                     <p>
                         Please be advised that the sensitivity of this system is not 100%. A more comprehensive
@@ -713,26 +673,22 @@ def generate_html_report(
             </div>
 
             <script>
-              
-               document.querySelectorAll('.banner').forEach(function(banner) {{
+                document.querySelectorAll('.banner').forEach(function(banner) {{
                     const expandIcon = banner.querySelector('.expand-icon');
                     if (!expandIcon) return;
 
-                    const content = banner.parentElement.querySelector('.collapsible-content');
+                    const content = banner.nextElementSibling;
 
                     // Initialize as collapsed
                     content.classList.remove('expanded');
                     expandIcon.textContent = '▼';
-                    expandIcon.classList.remove('expanded');
 
                     banner.addEventListener('click', function() {{
-                    const isExpanded = content.classList.toggle('expanded');
-                    expandIcon.classList.toggle('expanded');
-                    expandIcon.textContent = isExpanded ? '▲' : '▼';
+                        const isExpanded = content.classList.toggle('expanded');
+                        expandIcon.textContent = isExpanded ? '▲' : '▼';
                     }});
                 }});
 
-                
                 // Child expandable sections
                 document.querySelectorAll('.child-banner').forEach(function(banner) {{
                     const icon = banner.querySelector('.expand-icon');
@@ -743,12 +699,11 @@ def generate_html_report(
                     icon.textContent = '▲';
                     
                     banner.addEventListener('click', function(e) {{
-                        e.stopPropagation(); // Prevent triggering parent toggle
+                        e.stopPropagation();
                         const isExpanded = content.classList.toggle('expanded');
                         icon.textContent = isExpanded ? '▼' : '▲';
                     }});
                 }});
-
             </script>
         </body>
         </html>
