@@ -316,16 +316,19 @@ Now generate a similar report for the following input:
 {sdoh_dict}
 ---
 ## Clinical Notes:
-{clinical notes}
+{clinical_notes}
 ---
 ## Output Report:
 """
 
 
+def generate_SDoH_text(SDoH,clinical_notes,openai_config):
 
-def generate_SDoH_text(SDoH,openai_config):
+    data_ = {}
+    for key,value in SDoH.items():
+        data_[key.split(":")[0]] = value
 
-    prompt = system_prompt_sdh_report.format(sdoh_dict =SDoH )
+    prompt = system_prompt_sdh_report.format(sdoh_dict =data_,clinical_notes=clinical_notes )
 
     model = OpenAI(
             api_key=openai_config['api_key'],
@@ -347,30 +350,81 @@ def generate_SDoH_text(SDoH,openai_config):
     return _generate_openai(prompt).choices[0].message.content
 
 
+def extract_patient_data(df):
+    """
+    Extracts structured sections from a two-column DataFrame. Handles missing 'Clinical Notes' gracefully.
 
-def read_excel_data(excel_path):
-    return pd.read_excel(excel_path,index_col=0).to_dict(orient='records')[0]
+    Args:
+        df (pd.DataFrame): A dataframe with two columns: [Section, Value]
+
+    Returns:
+        dict: A dictionary with structured patient data categorized by section.
+    """
+    df.columns = ['Section', 'Value']
+
+    # Define section markers
+    sections = {
+        "Demographic Information": "Demographic information",
+        "Clinical History": "Clinical History",
+        "Social Determinants of Health": "Social of determinant of Health",
+        "Lab Tests": "Lab Tests",
+        "Clinical Notes": "Clinical Notes"
+    }
+
+    # Detect where each section begins (only include if present)
+    section_indices = {
+        key: df[df['Section'] == label].index[0]
+        for key, label in sections.items()
+        if label in df['Section'].values
+    }
+
+    # Sort by row index to determine boundaries
+    sorted_sections = sorted(section_indices.items(), key=lambda x: x[1])
+    boundaries = {
+        key: (idx, sorted_sections[i + 1][1] if i + 1 < len(sorted_sections) else len(df))
+        for i, (key, idx) in enumerate(sorted_sections)
+    }
+
+    # Extract data for each section
+    structured_data = {}
+    for section, (start, end) in boundaries.items():
+        sub_df = df.iloc[start + 1:end].dropna(subset=['Section'])
+        structured_data[section] = {
+            str(row['Section']).strip(): str(row['Value']).strip()
+            for _, row in sub_df.iterrows()
+            if str(row['Section']).strip().lower() != 'nan'
+        }
+
+    return structured_data
+
+def read_excel_data(excel_path,id=None):
+    xls = pd.ExcelFile(excel_path, engine='openpyxl')
+    df = pd.read_excel(xls, sheet_name=xls.sheet_names[0])
+
+    new_df = pd.DataFrame({
+    'Section': ['Demographic information'] + df['Demographic information'].tolist(),
+    'Value': ['NaN'] + df[df.columns[1]].tolist()
+    })
+
+    return new_df
 
 
 def generate_interface(
-        profile_path:str,
-        clinical_factor_path:str,
-        lab_tests_path:str,
+        excel_path:str,
         model_info_path:str,
-        SDoH_path:str,
         openai_config,
         linguistic_interpretation=None,
+        patient_id:str=None,
         transcription=None
 
     ):
-    profile = read_excel_data(profile_path)
-    clinical_factor = read_excel_data(clinical_factor_path)
-    lab_tests = read_excel_data(lab_tests_path)
+    data = extract_patient_data(read_excel_data(excel_path,patient_id))
     model_info = read_excel_data(model_info_path)
-    SDoH = read_excel_data(SDoH_path)
 
-    SDoH = generate_SDoH_text(SDoH,openai_config)
-    # print(SDoH)
+    SDoH = generate_SDoH_text(data['Social Determinants of Health'],data['Clinical Notes']['Report:'],openai_config)
+    profile = data['Demographic Information']
+    lab_tests = data['Lab Tests']
+    clinical_factor = data['Clinical History']
     significantFactors = [
         "Memory issue manifested by frequent repetition of specific words.",
         "Lack of semantic clarity in speech manifested by reliance on vague terms.",
@@ -379,9 +433,10 @@ def generate_interface(
     ]
 
     html = generate_html_report(
-        name=profile['name'],
-        gender =profile['gender'],
-        age=profile['age'],
+        name=profile['Name'],
+        gender =profile['Gender'],
+        age=profile['Age'],
+        language = profile['Primary Language'],
         cognitive_status=model_info['predicted_status'],
         system_confidence=model_info['confidence'],
         contribution=model_info['contribution'],
@@ -403,6 +458,7 @@ def generate_html_report(
     name,
     gender,
     age,
+    language,
     cognitive_status,
     system_confidence,
     contribution,
@@ -440,9 +496,13 @@ def generate_html_report(
     
     # Helper function to format keys
     def format_key(key):
+        if key.isupper():
+            return key
+        
         # Add space before capital letters and numbers
+        
         formatted = re.sub(r'(?<!^)([A-Z])', r' \1', key)        # Space before capital letters, unless at start
-        formatted = re.sub(r'(\d+)', r' \1', formatted)          # Space before numbers
+        # formatted = re.sub(r'(\d+)', r' \1', key)          # Space before numbers
         formatted = formatted.title()                            # Capitalize first letter of each word
         formatted = re.sub(r'\s+', ' ', formatted).strip()       # Normalize multiple spaces and trim
         return formatted
@@ -529,7 +589,7 @@ def generate_html_report(
                                 <h1><span class="bold_txt" style="color: #1E3658;">{name}</span></h1>
                                 <p><span class="bold_txt">Gender:</span> <span id="patientGender">{gender}</span></p>
                                 <p><span class="bold_txt">Age:</span> <span id="patientAge">{age}</span></p>
-                                <p><span class="bold_txt">Primary Language:</span> <span id="patientLanguage">{clinical_factor['primary_language']}</span></p>
+                                <p><span class="bold_txt">Primary Language:</span> <span id="patientLanguage">{language}</span></p>
                             </div>
                         </div>
                         <div class="system_info">
