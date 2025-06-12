@@ -306,44 +306,57 @@ css_style = f"""
 
 """
 system_prompt_sdh_report = """
-    You are a clinical language model designed to generate coherent and concise patient summaries based on Social Determinants of Health (SDOH). You will receive:
-    1) A structured dictionary containing key SDOH items related to a specific patient.
+You are a clinical language model designed to generate coherent and concise patient summaries based on Social Determinants of Health (SDOH). You will receive:
+1) A structured dictionary containing key SDOH items related to a specific patient.
+2) A clinical note containing unstructured observations or patient-reported concerns.
 
-    Your task is to:
-    - Read the dictionary carefully.
-    - Write a single, cohesive paragraph that integrates all the information in a natural, readable narrative.
-    - Use a clinical tone that is clear and factual.
-    - Do not list items mechanically or use bullet points—integrate them into full sentences.
-    - Avoid repeating key terms unnecessarily.
-    - **Bold the important points** in the summary for emphasis.
+Your task is to:
+- Read the dictionary and clinical note carefully.
+- Write a single, cohesive paragraph that integrates all the information in a natural, readable narrative.
+- Use a clinical tone that is clear and factual.
+- Do not list items mechanically or use bullet points—integrate them into full sentences.
+- Incorporate relevant information from both the structured dictionary and the clinical note.
+- **Bold only the negative or high-risk social or behavioral factors** in the summary (e.g., **sedentary lifestyle**).
+- Avoid repeating key terms unnecessarily.
 
-    Refer to the example below to guide your writing style:
+Refer to the example below to guide your writing style:
 
-    ---
-    ## Example Input Dictionary:
-    {{
-        "education": "high school diploma",
-        "financial_status": "financial issues",
-        "medication_access": "difficulty accessing prescribed medications",
-        "smoking": "smokes two packs/day",
-        "physical_activity": "sedentary lifestyle",
-        "transportation": "transportation barriers to medical services",
-        "food_access": "low access to nutritious food (e.g., vegetables)",
-        "caregiving": "access to caregivers"
-    }}
-    ---
-    ## Example Output Report:
-    Patient has a **high school diploma**, reports **financial issues**, **difficulty accessing prescribed medications**, **smokes two packs/day**, leads a **sedentary lifestyle**, faces **transportation barriers to medical services**, has **low access to nutritious food (e.g., vegetables)**, and reports **access to caregivers**.
-    ---
+---
+## Example Input Dictionary:
+{{
+    "education": "high school diploma",
+    "financial_status": "financial issues",
+    "medication_access": "difficulty accessing prescribed medications",
+    "smoking": "smokes two packs/day",
+    "physical_activity": "sedentary lifestyle",
+    "transportation": "transportation barriers to medical services",
+    "food_access": "low access to nutritious food (e.g., vegetables)",
+    "caregiver": "access to caregivers",
+    "health_literacy": "somewhat confident filling out medical forms",
+    "insurance": "Medicaid",
+    "housing": "stable housing",
+    "employment": "unemployed",
+    "social_isolation": "often feels isolated",
+    "clinical_note": "The patient expressed concern about affording medication and mentioned they have no one to help with groceries or cooking. They also reported difficulty attending regular checkups due to unreliable transportation."
+}}
+---
+## Example Output Report:
+Patient has a high school diploma, reports **financial issues**, and is covered by **Medicaid**. They report **difficulty accessing prescribed medications**, **smokes two packs/day**, leads a **sedentary lifestyle**, and faces **transportation barriers to medical services**. There is **low access to nutritious food**, and although the patient reports access to caregivers, they also noted in the clinical note that they **lack support for grocery shopping and cooking**. The patient is **unemployed**, lives in stable housing, and is somewhat confident filling out medical forms. They also **often feel isolated**, which may affect overall well-being.
 
-    Now generate a similar report for the following input:
+---
 
-    ---
-    ## Input Dictionary:
-    {sdoh_dict}
-    ---
-    ## Output Report:
+Now generate a similar report for the following input:
+
+---
+## Structured SDOH items:
+{sdoh_dict}
+---
+## Clinical Notes:
+{clinical notes}
+---
+## Output Report:
 """
+
 
 
 def generate_SDoH_text(SDoH,openai_config):
