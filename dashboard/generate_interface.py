@@ -269,7 +269,7 @@ css_style = f"""
         }}
 
 """
-system_prompt_sdh_report = """
+system_prompt_sdh_report = f"""
 You are a clinical language model designed to generate coherent and concise patient summaries based on Social Determinants of Health (SDOH). You will receive:
 1) A structured dictionary containing key SDOH items related to a specific patient.
 2) A clinical note containing unstructured observations or patient-reported concerns.
@@ -313,10 +313,10 @@ Now generate a similar report for the following input:
 
 ---
 ## Structured SDOH items:
-{sdoh_dict}
+{{sdoh_dict}}
 ---
 ## Clinical Notes:
-{clinical_notes}
+{{clinical_notes}}
 ---
 ## Output Report:
 """
