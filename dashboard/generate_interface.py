@@ -37,6 +37,8 @@ css_style = f"""
             width: 100%;
             gap: 30px;
             padding: 15px 0;
+            justify-content: center;
+            align-items: center;
         }}
 
         /* Borders */
@@ -359,11 +361,11 @@ system_prompt_sdh_report = """
 
 def generate_SDoH_text(SDoH,clinical_notes,openai_config):
 
-    data_ = {}
-    for key,value in SDoH.items():
-        data_[key.split(":")[0]] = value
+    # data_ = {}
+    # for key,value in SDoH.items():
+    #     data_[key.split(":")[0]] = value
 
-    prompt = system_prompt_sdh_report.format(sdoh_dict =data_,clinical_notes=clinical_notes )
+    prompt = system_prompt_sdh_report.format(sdoh_dict =SDoH,clinical_notes=clinical_notes )
 
     model = OpenAI(
             api_key=openai_config['api_key'],
