@@ -18,7 +18,7 @@ css_style = f"""
             color: #1E3658;
             padding: 20px 0;
         }}
-        
+
         /* Layout Components */
         .container {{
             width: 100%;
@@ -35,9 +35,9 @@ css_style = f"""
         .horizontal_box {{
             display: flex;
             width: 100%;
-            gap: 30px;
+            gap: 5rem;
             padding: 15px 0;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
         }}
 
@@ -183,6 +183,7 @@ css_style = f"""
 
         /* Expandable Content */
         .collapsible-content {{
+            width: 100%;
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease;
@@ -190,6 +191,7 @@ css_style = f"""
 
         .collapsible-content.expanded {{
             max-height: 2000px;
+            width: 100%;
         }}
 
         .expand-icon {{
@@ -232,18 +234,18 @@ css_style = f"""
             margin-top: 15px;
             border-radius: 4px;
         }}
-        
+
         .child-content {{
             width: 100%;
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease;
         }}
-        
+
         .child-content.expanded {{
             max-height: 2000px;
         }}
-        
+
         /* Module specific styles */
         .module-subsection {{
             width: 100%;
@@ -252,7 +254,7 @@ css_style = f"""
             border: 2px solid #1E3658;
             border-radius: 4px;
         }}
-        
+
         .module-subsection-title {{
             font-weight: bold;
             font-size: 1.1rem;
@@ -262,7 +264,7 @@ css_style = f"""
             justify-content: space-between;
             align-items: center;
         }}
-        
+
         /* Audio player styling */
         audio {{
             width: 100%;
@@ -307,7 +309,7 @@ system_prompt_sdh_report = """
     Use the example below to guide tone, structure, and style.
 
     ---
-    ## Example 
+    ## Example
     # Structured SDOH items:
     {{
         'Physical Activity:
@@ -336,10 +338,10 @@ system_prompt_sdh_report = """
             What is your current employment status?': 'Retired'
     }}
     # Clinical Notes:
-    
+
         The patient lives alone and relies on neighbors for occasional help with transportation. He reports feeling socially isolated and rarely leaves the house due to mobility issues. While his housing is stable, he struggles with utility payments and recently experienced a service disruption. He has limited access to fresh food and primarily consumes packaged meals. Despite these challenges, the patient remains engaged in his care and understands his treatment plan well.
 
-    
+
     #Output Report:
 
         The patient is retired and holds a bachelor’s degree, with no history of tobacco use. He reports **rare physical activity**, primarily due to mobility limitations, and feels **socially isolated**, often relying on neighbors for occasional transportation assistance. Although his housing is described as stable in the clinical note, the structured data indicates he lives in temporary housing or with others, suggesting some instability. He experiences **financial strain**, struggling to pay for utilities, which has led to recent service disruptions. He also reports **frequent worry about food insecurity** and primarily consumes packaged meals due to limited access to fresh food. While he has Medicaid coverage and does not face transportation barriers to medical care, he has **limited access to prescribed medications due to cost** and only sometimes receives help with daily tasks. Despite these challenges, he remains engaged in his care and has a clear understanding of his treatment plan.
@@ -428,7 +430,7 @@ def extract_patient_data(df):
         sub_df = df.iloc[start + 1:end].dropna(subset=['Section'])
         structured_data[section] = {
             str(row['Section']).strip(): (
-                '' if pd.isna(row['Value']) 
+                '' if pd.isna(row['Value'])
                 else str(row['Value']).strip()
             )
             for _, row in sub_df.iterrows()
@@ -510,8 +512,8 @@ def generate_html_report(
     transcription=None
 
 ):
-    
-   
+
+
     def markdown_bold_to_html(text):
         """
         Converts text with **bold** markdown to HTML with <strong> tags
@@ -519,7 +521,7 @@ def generate_html_report(
         """
         # Split the text into parts alternating between normal and bold
         parts = text.split('**')
-        
+
         # Rebuild with HTML tags (odd indexes are bold)
         html_content = []
         for i, part in enumerate(parts):
@@ -527,26 +529,26 @@ def generate_html_report(
                 html_content.append(f'<strong>{part}</strong>')
             else:
                 html_content.append(part)
-        
+
         # Wrap in a div for better HTML structure
         return f'<div class="sdoh-text">{"".join(html_content)}</div>'
-    
+
     # Helper function to format keys
     def format_key(key):
         if key.isupper():
             return key
-        
+
         # Add space before capital letters and numbers
-        
+
         formatted = re.sub(r'(?<!^)([A-Z])', r' \1', key)        # Space before capital letters, unless at start
         # formatted = re.sub(r'(\d+)', r' \1', key)          # Space before numbers
         formatted = formatted.title()                            # Capitalize first letter of each word
         formatted = re.sub(r'\s+', ' ', formatted).strip()       # Normalize multiple spaces and trim
         return formatted
-    
+
 
     SDoH = markdown_bold_to_html(SDoH)
-   
+
     # Generate Patient Status HTML
     patient_status_html = []
     for key, value in clinical_factor.items():
@@ -558,7 +560,7 @@ def generate_html_report(
             f'</div>'
         )
 
-       
+
     sig_factor_html = []
     for value in significantFactors:
         sig_factor_html.append(
@@ -569,7 +571,7 @@ def generate_html_report(
         )
 
     linguistic_interpretation = [line.strip().split(maxsplit=1)[1]  # Remove first word (bullet symbol)
-         for line in linguistic_interpretation.strip().split('\n') 
+         for line in linguistic_interpretation.strip().split('\n')
          if line.strip()]
     ling_interpret_html = []
     for value in linguistic_interpretation:
@@ -732,7 +734,7 @@ def generate_html_report(
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Acoustic Module -->
                         <div class="acoustic-module">
                             <div class="child-banner">
@@ -789,11 +791,11 @@ def generate_html_report(
                 document.querySelectorAll('.child-banner').forEach(function(banner) {{
                     const icon = banner.querySelector('.expand-icon');
                     const content = banner.nextElementSibling;
-                    
+
                     // Initialize as collapsed
                     content.classList.remove('expanded');
                     icon.textContent = '▲';
-                    
+
                     banner.addEventListener('click', function(e) {{
                         e.stopPropagation();
                         const isExpanded = content.classList.toggle('expanded');
