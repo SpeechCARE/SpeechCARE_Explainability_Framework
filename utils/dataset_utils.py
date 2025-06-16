@@ -35,7 +35,7 @@ def calculate_num_segments(audio_duration, segment_length, overlap, min_acceptab
     return num_segments
 
 
-def preprocess_audio(audio_path, segment_length=5, overlap=0.2, target_sr=16000):
+def preprocess_audio(audio_path, processor = None, segment_length=5, overlap=0.2, target_sr=16000):
         """
         Preprocess a single audio file into segments.
 
@@ -59,29 +59,35 @@ def preprocess_audio(audio_path, segment_length=5, overlap=0.2, target_sr=16000)
         else:
             audio = audio.squeeze(0)
 
-        # Calculate segment parameters
-        segment_samples = int(segment_length * target_sr)
-        overlap_samples = int(segment_samples * overlap)
-        step_samples = segment_samples - overlap_samples
-        num_segments = calculate_num_segments(len(audio) / target_sr, segment_length, overlap, 5)
-        segments = []
-        end_sample = 0
+        if processor:
+            features = processor(audio, sampling_rate=target_sr, return_tensors="pt").input_features.squeeze()
+            return features
 
-        # Create segments
-        for i in range(num_segments):
-            start_sample = i * step_samples
-            end_sample = start_sample + segment_samples
-            segment = audio[start_sample:end_sample]
-            segments.append(segment)
+        else:
+            # Calculate segment parameters
+            segment_samples = int(segment_length * target_sr)
+            overlap_samples = int(segment_samples * overlap)
+            step_samples = segment_samples - overlap_samples
+            num_segments = calculate_num_segments(len(audio) / target_sr, segment_length, overlap, 5)
+            segments = []
+            end_sample = 0
 
-        # Handle remaining part
-        remaining_part = audio[end_sample:]
-        if len(remaining_part) >= 5 * target_sr:
-            segments.append(remaining_part)
+            # Create segments
+            for i in range(num_segments):
+                start_sample = i * step_samples
+                end_sample = start_sample + segment_samples
+                segment = audio[start_sample:end_sample]
+                segments.append(segment)
 
-        # Stack segments into a tensor
-        waveform = torch.stack(segments)  # Shape: [num_segments, seq_length]
-        return waveform.unsqueeze(0)  # Add batch dimension: [1, num_segments, seq_length]
+            # Handle remaining part
+            remaining_part = audio[end_sample:]
+            if len(remaining_part) >= 5 * target_sr:
+                segments.append(remaining_part)
+
+            # Stack segments into a tensor
+            waveform = torch.stack(segments)  # Shape: [num_segments, seq_length]
+            waveform = waveform.unsqueeze(0)  # Add batch dimension: [1, num_segments, seq_length] 
+            return waveform
 
 
 def lowpass(waveform, sampling_rate, cutoff_freq=3000, order=5):
