@@ -1,4 +1,4 @@
-from model.Model import TBNet
+
 from utils.Utils import report
 
 import torch
@@ -11,24 +11,24 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from transformers import AutoTokenizer
 from transformers import Wav2Vec2FeatureExtractor
 
- 
+
 class ModelWrapper:
     def __init__(self, config):
 
         self.config = config
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         report(f'{self.device} is available', True)
-    
+
 
     def get_model(self, weights_path= None):
         """Returns the model instance."""
         model = TBNet(self.config).to(self.device)
         if weights_path!= None: model.load_state_dict(torch.load(weights_path))
         return model
-    
+
     def get_voice_feature_extractor(self):
         return Wav2Vec2FeatureExtractor.from_pretrained(self.config.speech_transformer_chp)
-       
+
     def get_scheduler(self,type,optimizer):
         if type == "ReduceLROnPlateau":
             return ReduceLROnPlateau(optimizer, mode='min', factor=0.8, patience= 4, min_lr=1e-6, threshold=0.01)
@@ -56,12 +56,11 @@ class ModelWrapper:
 
         return optimizer
 
-    
+
     def load_model_and_tokenizer(self,device,weights_path= None):
         model = self.get_model(self.config , device ,weights_path)
         model.eval()
         model.zero_grad()
         tokenizer = AutoTokenizer.from_pretrained(self.config.transformer_chp)
         return model, tokenizer
-    
-  
+

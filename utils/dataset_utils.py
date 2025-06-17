@@ -1,6 +1,6 @@
 import torch
 import torchaudio
-import torchaudio.transforms as transforms 
+import torchaudio.transforms as transforms
 
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
 
@@ -10,8 +10,6 @@ import numpy as np
 import pandas as pd
 
 import scipy.signal as signal
-
-from utils.Utils import get_audio_path
 
 def calculate_num_segments(audio_duration, segment_length, overlap, min_acceptable):
     """
@@ -86,7 +84,7 @@ def preprocess_audio(audio_path, processor = None, segment_length=5, overlap=0.2
 
             # Stack segments into a tensor
             waveform = torch.stack(segments)  # Shape: [num_segments, seq_length]
-            waveform = waveform.unsqueeze(0)  # Add batch dimension: [1, num_segments, seq_length] 
+            waveform = waveform.unsqueeze(0)  # Add batch dimension: [1, num_segments, seq_length]
             return waveform
 
 

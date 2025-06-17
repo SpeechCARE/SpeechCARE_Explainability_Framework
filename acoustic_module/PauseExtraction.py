@@ -23,7 +23,7 @@ class PauseExtraction:
         """
         self.audio_file = audio_file
         self.word_segments = word_segments
-        self.device = config.device 
+        self.device = config.device
         self.batch_size = config.batch_size
         self.compute_type = config.compute_type
         self.model_id = config.model_id
@@ -45,7 +45,7 @@ class PauseExtraction:
             with open(self.word_segments, "r") as f:
                 result = json.load(f)
         return result
-    
+
     def extract_pauses(
         self,
         energy_threshold: float = 0.001,
@@ -85,18 +85,18 @@ class PauseExtraction:
         # 1. Get word segments and POS tags
         word_segments = self.extract_word_segments()
         tagged_words = self.get_pos_tagged_words(word_segments)
-        
+
         # 2. Extract raw pauses
         raw_pauses = self._find_raw_pauses(
             tagged_words,
             pause_threshold=pause_threshold,
             window_size=context_window_size
         )
-        
+
         # 3. Process pauses
         if marked:
             raw_pauses = self.mark_pauses(raw_pauses)
-        
+
         if refined:
             raw_pauses = self.refine_pauses(
                 raw_pauses,
@@ -105,7 +105,7 @@ class PauseExtraction:
                 min_pause_duration=min_pause_duration,
                 expansion_threshold=expansion_threshold
             )
-        
+
         return raw_pauses
 
     def _find_raw_pauses(
@@ -116,38 +116,38 @@ class PauseExtraction:
     ) -> List[Tuple]:
         """
         Identify pauses between words based on temporal gaps.
-        
+
         Args:
             tagged_words: List of words with POS tags and timings
             pause_threshold: Minimum gap duration to consider as pause
             window_size: Context window size in words
-            
+
         Returns:
             List of raw pause tuples
         """
         pauses = []
-        
+
         for i in range(len(tagged_words) - 1):
             gap_duration = tagged_words[i + 1]['start'] - tagged_words[i]['end']
-            
+
             if gap_duration > pause_threshold:
                 # Get context window
                 start_idx = max(0, i - window_size)
                 end_idx = min(len(tagged_words), i + window_size + 1)
-                
+
                 # Build context phrases
                 pre_context = " ".join(
-                    w['word'].lower() 
+                    w['word'].lower()
                     for w in tagged_words[start_idx:i]
                 )
                 post_context = " ".join(
-                    w['word'].lower() 
+                    w['word'].lower()
                     for w in tagged_words[i + 1:end_idx]
                 )
-                
+
                 # Create pause tuple
                 pause = (
-                    tagged_words[i]['end'], 
+                    tagged_words[i]['end'],
                     tagged_words[i + 1]['start'],
                     tagged_words[i]['word'],
                     tagged_words[i]['POS'],
@@ -157,9 +157,9 @@ class PauseExtraction:
                     post_context
                 )
                 pauses.append(pause)
-        
+
         return pauses
-    
+
     def get_pps(self, doc):
         "Function to get PPs from a parsed document."
         pps = []
@@ -202,7 +202,7 @@ class PauseExtraction:
                 prep_phrases = [phrase for phrase in prep_phrases if phrase.startswith(next_word.lower())]
                 noun_phrases = [chunk.text for chunk in doc.noun_chunks]
                 noun_phrases = [phrase for phrase in noun_phrases if phrase.startswith(next_word.lower())]
-                
+
                 if noun_phrases:
                     mark = "Pause before noun phrase"
                 elif prep_phrases:
