@@ -11,6 +11,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from transformers import AutoTokenizer
 from transformers import Wav2Vec2FeatureExtractor
 
+from Model import TBNet
 
 class ModelWrapper:
     def __init__(self, config):
