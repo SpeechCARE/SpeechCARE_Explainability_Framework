@@ -209,7 +209,7 @@ class TBNet(nn.Module):
         if self.config.speech_transformer_chp == self.config.mHuBERT:
             speech_embeddings = self.speech_transformer(input_values)
         elif self.config.speech_transformer_chp == self.config.WHISPER:
-            speech_embeddings = self.speech_transformer.encode(input_values)
+            speech_embeddings = self.speech_transformer.encoder(input_values)
 
         output_embeddings = speech_embeddings.last_hidden_state  # (batch*segments, seq_len, hidden_dim)
         output_embeddings = output_embeddings.view(batch_size, -1, output_embeddings.size(-1))
