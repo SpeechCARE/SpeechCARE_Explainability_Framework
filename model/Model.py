@@ -53,7 +53,7 @@ class TBNet(nn.Module):
         if config.speech_transformer_chp == config.mHuBERT:
             self.speech_transformer = AutoModel.from_pretrained(config.speech_transformer_chp)
         elif config.speech_transformer_chp == config.WHISPER:
-            self.speech_transformer = WhisperModel.from_pretrained(config.speech_transformer_chp).encoder
+            self.speech_transformer = WhisperModel.from_pretrained(config.speech_transformer_chp)
         speech_embedding_dim = self.speech_transformer.config.hidden_size
 
         # Initialize text encoder
@@ -127,7 +127,11 @@ class TBNet(nn.Module):
         batch_size, num_segments, seq_length = input_values.size()
         input_values = input_values.view(batch_size * num_segments, seq_length)
 
-        speech_embeddings = self.speech_transformer(input_values)
+        if self.config.speech_transformer_chp == self.config.mHuBERT:
+            speech_embeddings = self.speech_transformer(input_values)
+        elif self.config.speech_transformer_chp == self.config.WHISPER:
+            speech_embeddings = self.speech_transformer.encode(input_values)
+
         speech_embeddings = speech_embeddings.view(batch_size, num_segments, -1, speech_embeddings.size(-1))
         speech_embeddings = speech_embeddings.view(batch_size, num_segments * speech_embeddings.size(2), -1)
 
@@ -192,9 +196,12 @@ class TBNet(nn.Module):
             input_values = input_values.requires_grad_(True).to(device)        
 
         # Get transformer output
-        transformer_output = self.speech_transformer(input_values)
-        output_embeddings = transformer_output.last_hidden_state  # (batch*segments, seq_len, hidden_dim)
+        if self.config.speech_transformer_chp == self.config.mHuBERT:
+            speech_embeddings = self.speech_transformer(input_values)
+        elif self.config.speech_transformer_chp == self.config.WHISPER:
+            speech_embeddings = self.speech_transformer.encode(input_values)
 
+        output_embeddings = speech_embeddings.last_hidden_state  # (batch*segments, seq_len, hidden_dim)
         output_embeddings = output_embeddings.view(batch_size, -1, output_embeddings.size(-1))
 
 
