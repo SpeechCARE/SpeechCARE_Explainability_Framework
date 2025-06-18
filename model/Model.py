@@ -40,14 +40,11 @@ class GatingNetwork(nn.Module):
 
 
 class TBNet(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config,speech_only=False):
         super(TBNet, self).__init__()
         self.config = config
         self.predicted_label = None
         self.transcription = None
-
-        # Initialize tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(config.txt_transformer_chp, trust_remote_code=True)
 
         # Initialize speech encoder
         if config.speech_transformer_chp == config.mHuBERT:
@@ -55,10 +52,6 @@ class TBNet(nn.Module):
         elif config.speech_transformer_chp == config.WHISPER:
             self.speech_transformer = WhisperModel.from_pretrained(config.speech_transformer_chp)
         speech_embedding_dim = self.speech_transformer.config.hidden_size
-
-        # Initialize text encoder
-        self.txt_transformer = AutoModel.from_pretrained(config.txt_transformer_chp, trust_remote_code=True)
-        txt_embedding_dim = self.txt_transformer.config.hidden_size
 
         # CLS token and positional encoding
         self.cls_token = nn.Parameter(torch.randn(1, 1, speech_embedding_dim))
@@ -76,21 +69,35 @@ class TBNet(nn.Module):
         self.speech_head = nn.Sequential(
             nn.Linear(speech_embedding_dim, config.hidden_size),
             nn.Tanh(),
-        )
-        self.txt_head = nn.Sequential(
-            nn.Linear(txt_embedding_dim, config.hidden_size),
-            nn.Tanh(),
-        )
-        self.demography_head = nn.Sequential(
-            nn.Linear(1, config.demography_hidden_size),
-            nn.Tanh(),
+            nn.Linear(config.hidden_size, config.num_labels)
         )
 
-        # Classifiers
-        self.speech_classifier = nn.Linear(config.hidden_size, config.num_labels)
-        self.txt_classifier = nn.Linear(config.hidden_size, config.num_labels)
-        self.demography_classifier = nn.Linear(config.demography_hidden_size, config.num_labels)
-        self.weight_gate = GatingNetwork((config.hidden_size * 2) + config.demography_hidden_size)
+
+        if not speech_only:
+
+            # Initialize tokenizer
+            self.tokenizer = AutoTokenizer.from_pretrained(config.txt_transformer_chp, trust_remote_code=True)
+
+            # Initialize text encoder
+            self.txt_transformer = AutoModel.from_pretrained(config.txt_transformer_chp, trust_remote_code=True)
+            txt_embedding_dim = self.txt_transformer.config.hidden_size
+        
+            self.txt_head = nn.Sequential(
+                nn.Linear(txt_embedding_dim, config.hidden_size),
+                nn.Tanh(),
+            )
+            self.demography_head = nn.Sequential(
+                nn.Linear(1, config.demography_hidden_size),
+                nn.Tanh(),
+            )
+            self.speech_head = nn.Sequential(
+                nn.Linear(speech_embedding_dim, config.hidden_size),
+                nn.Tanh(),
+            )
+            self.speech_classifier = nn.Linear(config.hidden_size, config.num_labels)
+            self.txt_classifier = nn.Linear(config.hidden_size, config.num_labels)
+            self.demography_classifier = nn.Linear(config.demography_hidden_size, config.num_labels)
+            self.weight_gate = GatingNetwork((config.hidden_size * 2) + config.demography_hidden_size)
 
         self._init_whisper_pipeline()
 
@@ -220,11 +227,11 @@ class TBNet(nn.Module):
         # Classification head
         cls = features[:, 0, :]  # CLS token
         x = self.speech_head(cls)
-        x = self.speech_classifier(x)
+        # x = self.speech_classifier(x)
 
 
         if return_embeddings:
-            return x, transformer_output
+            return x, speech_embeddings
         if return_features:
             return x, features  # Return logits + feature maps
         return x
