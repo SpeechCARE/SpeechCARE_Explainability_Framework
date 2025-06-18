@@ -45,6 +45,7 @@ class TBNet(nn.Module):
         self.config = config
         self.predicted_label = None
         self.transcription = None
+        self.speech_only = speech_only
 
         # Initialize speech encoder
         if config.speech_transformer_chp == config.mHuBERT:
@@ -253,15 +254,18 @@ class TBNet(nn.Module):
         }
     def preprocess_data(self,audio_path,segment_length,demography_info, overlap=0.2, target_sr=16000):
         audio_path = str(audio_path)
+        input_ids,attention_mask,demography_tensor = None,None,None
 
-        print("Transcribing audio...")
-        transcription_result = self.whisper_pipeline(audio_path)
-        self.transcription = transcription_result["text"]
-        print(f"Transcription: {self.transcription}")
-        print("Tokenizing transcription...")
-        tokenized_text = self.tokenizer(self.transcription, return_tensors="pt", padding=True, truncation=True)
-        input_ids = tokenized_text["input_ids"]
-        attention_mask = tokenized_text["attention_mask"]
+        if not self.speech_only:
+            print("Transcribing audio...")
+            transcription_result = self.whisper_pipeline(audio_path)
+            self.transcription = transcription_result["text"]
+            print(f"Transcription: {self.transcription}")
+            print("Tokenizing transcription...")
+            tokenized_text = self.tokenizer(self.transcription, return_tensors="pt", padding=True, truncation=True)
+            input_ids = tokenized_text["input_ids"]
+            attention_mask = tokenized_text["attention_mask"]
+            demography_tensor = torch.tensor([demography_info], dtype=torch.float32).unsqueeze(0)
 
         print("Preprocessing audio...")
         if self.config.speech_transformer_chp == self.config.mHuBERT:
@@ -270,7 +274,7 @@ class TBNet(nn.Module):
             processor= WhisperProcessor.from_pretrained(self.config.speech_transformer_chp)
         input_values = preprocess_audio(audio_path, processor,segment_length=segment_length, overlap=overlap,target_sr=target_sr)
 
-        demography_tensor = torch.tensor([demography_info], dtype=torch.float32).unsqueeze(0)
+        
 
         return input_values,input_ids,attention_mask,demography_tensor
 
