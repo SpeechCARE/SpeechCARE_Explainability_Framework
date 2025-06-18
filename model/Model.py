@@ -55,7 +55,7 @@ class TBNet(nn.Module):
 
         # CLS token and positional encoding
         self.cls_token = nn.Parameter(torch.randn(1, 1, speech_embedding_dim))
-        max_seq_length = int(config.max_num_segments * ((config.segment_size / 0.02) - 1)) + 1
+        max_seq_length = int(config.segment_size / 0.02) + 1 # +1 for CLS embedding
         self.positional_encoding = nn.Parameter(torch.randn(1, max_seq_length, speech_embedding_dim))
 
         # Transformer layers
@@ -74,6 +74,8 @@ class TBNet(nn.Module):
 
 
         if not speech_only:
+            max_seq_length = int(config.max_num_segments * ((config.segment_size / 0.02) - 1)) + 1
+            self.positional_encoding = nn.Parameter(torch.randn(1, max_seq_length, speech_embedding_dim))
 
             # Initialize tokenizer
             self.tokenizer = AutoTokenizer.from_pretrained(config.txt_transformer_chp, trust_remote_code=True)
