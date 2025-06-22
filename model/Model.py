@@ -272,7 +272,7 @@ class TBNet(nn.Module):
             processor= None
         elif self.config.speech_transformer_chp == self.config.WHISPER:
             processor= WhisperProcessor.from_pretrained(self.config.speech_transformer_chp)
-        input_values = preprocess_audio(audio_path, processor,segment_length=segment_length, overlap=overlap,target_sr=target_sr)
+        input_values = preprocess_audio(audio_path, processor=processor,segment_length=segment_length, overlap=overlap,target_sr=target_sr)
 
         
 
