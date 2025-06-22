@@ -33,7 +33,7 @@ def calculate_num_segments(audio_duration, segment_length, overlap, min_acceptab
     return num_segments
 
 
-def preprocess_audio(audio_path, processor = None, segment_length=5, overlap=0.2, target_sr=16000):
+def preprocess_audio(audio_path, segment_length, processor = None, overlap=0.2, target_sr=16000):
         """
         Preprocess a single audio file into segments.
 
