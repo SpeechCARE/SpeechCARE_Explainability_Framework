@@ -230,8 +230,10 @@ class TBNet(nn.Module):
         # Classification head
         cls = features[:, 0, :]  # CLS token
         x = self.speech_head(cls)
-        # x = self.speech_classifier(x)
-
+        if not self.speech_only:
+            x = self.speech_classifier(x)
+            
+        self.predicted_label = torch.argmax(x, dim=1).item()
 
         if return_embeddings:
             return x, speech_embeddings

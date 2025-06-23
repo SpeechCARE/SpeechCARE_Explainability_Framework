@@ -9,6 +9,8 @@ from matplotlib.cm import get_cmap
 
 
 
+
+
 def compute_saliency_waveform(model, input_values, target_class=None, segment_length=5, overlap=0.2, target_sr=16000):
     # Ensure model and input are on the same device
     device = next(model.parameters()).device
@@ -141,14 +143,15 @@ def plot_saliency_waveform(saliency_data, pauses=None):
 
 
 
+
 def plot_waveform_with_saliency(
     waveform,
     saliency,
     time,
     threshold=0.3,
-    highlight_color='orange',
+    highlight_color='red',
     base_color='#bfbfbd',
-    figsize=(14, 5),
+    figsize=(14, 4),
     title="Waveform Colored by Saliency",
     xlabel="Time (s)",
     ylabel="Amplitude"
@@ -198,71 +201,67 @@ def plot_waveform_with_saliency(
     plt.show()
 
 
-
-def plot_spectrogram_with_saliency(
+def plot_spectrogram_with_saliency_modulated(
     spectrogram,
     sr,
     hop_length,
     saliency,
+    audio,
     threshold=0.3,
     highlight_cmap='inferno',
     base_cmap='gray_r',
-    figsize=(14, 6),
-    title="Spectrogram with Saliency Overlay",
-    alpha=0.8
+    figsize=(20, 6),
+    title="Spectrogram with Saliency-Modulated Color",
 ):
     """
-    Plot a spectrogram with important regions (based on saliency) highlighted.
-
+    Plot a spectrogram where full vertical time slices are colored
+    if the mean saliency in that time window (from raw waveform) exceeds threshold.
+    
     Parameters:
     - spectrogram: np.ndarray, shape (freq_bins, time_frames)
     - sr: int, sample rate
-    - hop_length: int, hop length used in STFT
-    - saliency: 1D or 2D np.ndarray (time-aligned with spectrogram frames)
-    - threshold: float, saliency values below this will not be highlighted
-    - highlight_cmap: str, colormap for important regions
-    - base_cmap: str, colormap for the default grayscale spectrogram
-    - figsize: tuple, size of the figure
-    - title: str, plot title
-    - alpha: float, transparency of the saliency overlay
+    - hop_length: int, STFT hop length
+    - saliency: 1D np.ndarray of shape (samples,)
+    - audio: 1D np.ndarray of shape (samples,)
+    - threshold: float, saliency threshold per time frame
     """
-
-    # Normalize and reshape saliency
-    saliency = np.clip(saliency, 0, 1)
-    if saliency.ndim == 1:
-        saliency = np.tile(saliency, (spectrogram.shape[0], 1))  # Expand to 2D
-    elif saliency.shape != spectrogram.shape:
-        raise ValueError("Saliency shape must match spectrogram shape or be 1D of time dimension.")
-
-    # Create masks
-    mask = saliency >= threshold
-    masked_saliency = np.where(mask, saliency, 0)
-
-    # Time & frequency axes
+    
+    # Normalize spectrogram
+    norm_spec = (spectrogram - spectrogram.min()) / (spectrogram.max() - spectrogram.min() + 1e-6)
+    
+    freq_bins, time_frames = spectrogram.shape
+    total_samples = len(audio)
+    
+    # Compute saliency per time frame
+    saliency_per_frame = []
+    for frame_idx in range(time_frames):
+        start = frame_idx * hop_length
+        end = min(start + hop_length, total_samples)
+        mean_sal = np.mean(saliency[start:end]) if end > start else 0
+        saliency_per_frame.append(mean_sal)
+    saliency_per_frame = np.array(saliency_per_frame)
+    
+    # Get colormaps
+    base_cm = plt.get_cmap(base_cmap)
+    highlight_cm = plt.get_cmap(highlight_cmap)
+    
+    # Build color image
+    colored_image = np.zeros((*spectrogram.shape, 4))  # RGBA
+    for j in range(time_frames):
+        is_salient = saliency_per_frame[j] >= threshold
+        cmap = highlight_cm if is_salient else base_cm
+        for i in range(freq_bins):
+            val = norm_spec[i, j]
+            colored_image[i, j] = cmap(val)
+    
+    # Plot
     fig, ax = plt.subplots(figsize=figsize)
-    librosa.display.specshow(
-        librosa.power_to_db(spectrogram, ref=np.max),
-        sr=sr,
-        hop_length=hop_length,
-        x_axis='time',
-        y_axis='mel',
-        cmap=base_cmap,
-        ax=ax
-    )
-
-    # Overlay saliency in color
-    ax.imshow(
-        masked_saliency,
-        cmap=highlight_cmap,
-        alpha=alpha,
-        aspect='auto',
-        extent=[0, spectrogram.shape[1] * hop_length / sr, 0, sr // 2],
-        origin='lower'
-    )
-
+    duration = time_frames * hop_length / sr
+    extent = [0, duration, 0, sr // 2]
+    
+    ax.imshow(colored_image, aspect='auto', origin='lower', extent=extent)
     ax.set_title(title)
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Frequency (Hz)")
-    plt.colorbar(ax.images[-1], ax=ax, label='Saliency')
     plt.tight_layout()
     plt.show()
