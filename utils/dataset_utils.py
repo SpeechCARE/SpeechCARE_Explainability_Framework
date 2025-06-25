@@ -97,6 +97,18 @@ def lowpass(waveform, sampling_rate, cutoff_freq=3000, order=5):
     filtered_waveform = signal.lfilter(b, a, waveform, axis=1)
     return filtered_waveform
 
+def trim_audio(audio,sr,trim_size = 30):
+    max_length = sr * trim_size  # Number of samples in 30 seconds
+    audio = audio[:, :max_length]  # Trim if longer than 30s
+    return audio
+
+def save_processed_audio(processed_audio,sr,output_path):
+    processed_audio = torch.tensor(processed_audio)
+    torchaudio.save(output_path, processed_audio, sr)
+    return output_path
+
+
+
 def lpfilter_audio_files(audio_path, output_dir):
     assert audio_path is not None, "File path cannot be None"
     assert os.path.exists(audio_path), f"File not found: {audio_path}"
@@ -192,31 +204,21 @@ def get_age_category(age: int) -> str:
 
 def preprocess_data(audio_path: str,
                age: int,
+               trim:bool=True,
+               lowpass:bool = True,
+               trim_size:int = 30,
                output_dir: str = "./processed_audio") -> pd.DataFrame:
-    """
-    Prepares the dataframe by:
-    1. Validating required columns (uid, age)
-    2. Generating audio paths
-    3. Applying low-pass filtering to audio files
-    4. Adding age bins
-    5. Generating transcriptions
     
-    Args:
-        df: Input dataframe with columns (uid, age) and optionally gender
-        output_dir: Directory to save processed audio files (default: './processed_audio')
-        
-    Returns:
-        Processed dataframe with additional columns:
-        - processed_audio_path: Path to filtered audio file
-        - age_bin: Categorical age bin
-        - transcription: Whisper-generated transcription
-    """
-    
-    processed_audio_path = lpfilter_audio_files(audio_path, output_dir)
+    audio, sr = torchaudio.load(audio_path)
+    if trim: audio = trim_audio(audio,sr,trim_size)
+    if lowpass: audio = lowpass(audio,sr,8000, 5)
+
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, audio_path.split("/")[-1].split(".")[0] + ".wav")
+    processed_audio_path = save_processed_audio(audio,sr,output_path)
 
     age_category = get_age_category(age)
     
-    # 5. Generate transcriptions (load model once for efficiency)
     pipe = get_whisper_model()
     transcription = get_whisper_transcription_and_lang(processed_audio_path, pipe)
 
