@@ -191,7 +191,8 @@ def get_age_category(age: int) -> str:
 
 def preprocess_data(audio_path: str,
                age: int,
-               output_dir: str = "./processed_audio") -> pd.DataFrame:
+               output_dir: str = "./processed_audio",
+               preprocess_audio: bool = True) -> pd.DataFrame:
     """
     Prepares the dataframe by:
     1. Validating required columns (uid, age)
@@ -211,8 +212,10 @@ def preprocess_data(audio_path: str,
         - transcription: Whisper-generated transcription
     """
     
-
-    processed_audio_path = lpfilter_audio_files(audio_path, output_dir)
+    if preprocess_audio:
+        processed_audio_path = lpfilter_audio_files(audio_path, output_dir)
+    else:
+        processed_audio_path = audio_path
 
     age_category = get_age_category(age)
     
