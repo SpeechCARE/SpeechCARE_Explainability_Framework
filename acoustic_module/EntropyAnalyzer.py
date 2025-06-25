@@ -189,7 +189,8 @@ class EntropyAnalyzer:
         segments_merge_gap: float = 0.5,
         figsize: Tuple[int, int] = (20, 2),
         dpi: int = 200,
-        visualize: bool = False
+        visualize: bool = False,
+        filter_signal:bool = False,
     ) -> Dict[str, Any]:
         """
         Complete entropy analysis with optional visualization.
@@ -219,7 +220,7 @@ class EntropyAnalyzer:
         
         # Load and process audio
         signal, orig_sr = librosa.load(audio_path, sr=None)
-        filtered_signal = self._low_pass_filter(signal, orig_sr, cutoff)
+        if filter_signal: filtered_signal = self._low_pass_filter(signal, orig_sr, cutoff)
         resampled_signal = librosa.resample(filtered_signal, orig_sr=orig_sr, target_sr=sr)
         
         # Calculate entropy
