@@ -220,7 +220,10 @@ class EntropyAnalyzer:
         
         # Load and process audio
         signal, orig_sr = librosa.load(audio_path, sr=None)
-        if filter_signal: filtered_signal = self._low_pass_filter(signal, orig_sr, cutoff)
+        if filter_signal:
+            filtered_signal = self._low_pass_filter(signal, orig_sr, cutoff)
+        else:
+            filtered_signal = signal
         resampled_signal = librosa.resample(filtered_signal, orig_sr=orig_sr, target_sr=sr)
         
         # Calculate entropy
