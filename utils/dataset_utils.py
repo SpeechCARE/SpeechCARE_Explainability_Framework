@@ -11,6 +11,7 @@ import pandas as pd
 
 import scipy.signal as signal
 
+
 def calculate_num_segments(audio_duration, segment_length, overlap, min_acceptable):
     """
     Calculate the maximum number of segments for a given audio duration.
