@@ -84,7 +84,7 @@ class TBNet(nn.Module):
             # Initialize text encoder
             self.txt_transformer = AutoModel.from_pretrained(config.txt_transformer_chp, trust_remote_code=True)
             txt_embedding_dim = self.txt_transformer.config.hidden_size
-        
+
             self.txt_head = nn.Sequential(
                 nn.Linear(txt_embedding_dim, config.hidden_size),
                 nn.Tanh(),
@@ -203,7 +203,7 @@ class TBNet(nn.Module):
             input_values = input_values.reshape(batch_size * num_segments, seq_length)  # Preserves gradients
 
         if needs_grad:
-            input_values = input_values.requires_grad_(True).to(device)        
+            input_values = input_values.requires_grad_(True).to(device)
 
         # Get transformer output
         if self.config.speech_transformer_chp == self.config.mHuBERT:
@@ -232,8 +232,7 @@ class TBNet(nn.Module):
         x = self.speech_head(cls)
         if not self.speech_only:
             x = self.speech_classifier(x)
-            
-        self.predicted_label = torch.argmax(x, dim=1).item()
+
 
         if return_embeddings:
             return x, speech_embeddings
@@ -275,7 +274,7 @@ class TBNet(nn.Module):
             processor= WhisperProcessor.from_pretrained(self.config.speech_transformer_chp)
         input_values = preprocess_audio(audio_path, processor=processor,segment_length=segment_length, overlap=overlap,target_sr=target_sr)
 
-        
+
 
         return input_values,input_ids,attention_mask,demography_tensor
 
