@@ -404,21 +404,30 @@ class PauseExtraction:
             List[dict]: List of words with POS tags.
         """
         exclude = set(string.punctuation) | {"’"}
+        
         text = " ".join([item['text'] for item in data["segments"]])
         text = ''.join(ch for ch in text if ch not in exclude)
+        
         doc = nlp(text)
         stanza_tokens = [(word.text, word.upos) for sentence in doc.sentences for word in sentence.words]
         stanza_tokens = PauseExtraction.concatenate_part_tuples(stanza_tokens)
 
         words = []
         for word_info in data["word_segments"]:
-            text = ''.join(ch for ch in word_info['word'] if ch not in exclude)
-            start = word_info['start']
-            end = word_info['end']
-            tags = [k for k in stanza_tokens if k[0] == text]
-            closest_index = min(range(len(tags)), key=lambda i: abs(i - len(words)))
-            words.append({"word": text, "start": start, "end": end, "POS": tags[closest_index][1]})
+          text = ''.join(ch for ch in word_info['word'].lower() if ch not in exclude)
+          start = word_info['start']
+          end = word_info['end']
+          tags = [k for k in stanza_tokens if k[0].lower() == text]
 
+          if tags:
+              closest_index = min(range(len(tags)), key=lambda i: abs(i - len(words)))
+              pos_tag = tags[closest_index][1]
+          else:
+              pos_tag = "UNK"  # or None or "" depending on your needs
+
+          words.append({"word": text, "start": start, "end": end, "POS": pos_tag})
+
+ 
         return words
 
     @staticmethod

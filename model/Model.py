@@ -245,7 +245,6 @@ class TBNet(nn.Module):
         self.eval()
         self.to(self.device)
 
-
         with torch.no_grad():
             predictions, embeddings = self.speech_only_forward(input_values, return_embeddings=True)
 
