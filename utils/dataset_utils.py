@@ -205,13 +205,13 @@ def get_age_category(age: int) -> str:
 def preprocess_data(audio_path: str,
                age: int,
                trim:bool=True,
-               lowpass:bool = True,
+               apply_lowpass:bool = True,
                trim_size:int = 30,
                output_dir: str = "./processed_audio") -> pd.DataFrame:
     
     audio, sr = torchaudio.load(audio_path)
     if trim: audio = trim_audio(audio,sr,trim_size)
-    if lowpass: audio = lowpass(audio,sr,8000, 5)
+    if apply_lowpass: audio = lowpass(audio,sr,8000, 5)
 
     os.makedirs(output_dir, exist_ok=True)
     output_path = os.path.join(output_dir, audio_path.split("/")[-1].split(".")[0] + ".wav")
