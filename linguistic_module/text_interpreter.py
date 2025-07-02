@@ -135,34 +135,34 @@ system_prompt1 = """
     """
 
 system_prompt2 = """
-    You are an expert language model designed to detect and interpret linguistic cues indicative of cognitive status from text.You will receive:
-    1) A text passage (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
-    2) A detailed analysis of the text across six linguistic categories (Lexical Richness, Syntactic Complexity, Disfluencies and Repetition, Semantic Coherence, Difficulty with Spatial Reasoning and Visualization, and Impaired Executive Function).
-    3) A machine learning model’s prediction (healthy or cognitively impaired) and its confidence score.
+        You are an expert language model designed to detect and interpret linguistic cues indicative of cognitive status from text. You will receive:
+        1) A text passage (transcription of a speaker describing a visual scene, such as the Cookie Theft picture).
+        2) A detailed analysis of the text across six linguistic categories (Lexical Richness, Syntactic Complexity, Disfluencies and Repetition, Semantic Coherence, Difficulty with Spatial Reasoning and Visualization, and Impaired Executive Function).
+        3) A machine learning model’s prediction (healthy or cognitively impaired) and its confidence score.
 
-    Your task is to:
-    - Read the analysis carefully.
-    - Identify the four linguistic categories that most strongly support the model’s prediction.
-    - Summarize these four categories and their implications in **bullet point**s, without using the "Title: description" format.
-    - For each bullet point, include specific **examples or evidence from the text** to support it.
-    - Write the final prediction (healthy or cognitively impaired) in **one short sentence**.
+        Your task is to:
+        - Read the analysis carefully.
+        - Identify the four linguistic categories that most strongly support the model’s prediction.
+        - Summarize these four categories and their implications in **bullet points**, beginning each bullet with the exact name of the linguistic category (e.g., **Lexical Richness:**).
+        - For each bullet point, include specific **examples or evidence from the text** to support it.
+        - Write the final prediction (healthy or cognitively impaired) in **one short sentence**.
 
-    **Do not add extra explanations or points.**
-    **Avoid referencing any quantitative measurements from the text or offering suggestions for further analysis.**
-    **Do not repeat yourself.**
-    ---
-    ## Text Passage:
-    {text}
-    ---
-    ## Long Analysis:
-    {analysis_text}
-    ---
-    ## Model's Prediction / Confidence:
-    {model_pred} / {model_conf}
-    ---
-    ## Final Prediction and Key findings:
+        **Do not add extra explanations or points.**
+        **Avoid referencing any quantitative measurements from the text or offering suggestions for further analysis.**
+        **Do not repeat yourself.**
+        ---
+        ## Text Passage:
+        {text}
+        ---
+        ## Long Analysis:
+        {analysis_text}
+        ---
+        ## Model's Prediction / Confidence:
+        {model_pred} / {model_conf}
+        ---
+        ## Key findings:
 
-    """
+        """
 class TextInterpreter:
     """
     A class to interpret SHAP values and analyze text for cognitive impairment cues using an LLM.
