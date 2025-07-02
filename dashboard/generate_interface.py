@@ -224,9 +224,10 @@ css_style = f"""
         .right-image {{
             position: absolute;
             right: 0;
-            top: 50px; /* adjust as needed */
-            width: 200px; /* or your preferred width */
-            opacity: 0.3; /* controls transparency */
+            top: 0px; 
+            height:100%;
+            width: auto; 
+            opacity: 0.4; /* controls transparency */
             pointer-events: none; /* makes sure it doesn’t block clicks */
             z-index: 1;
         }}
@@ -235,7 +236,7 @@ css_style = f"""
         .child-banner {{
             width: 100%;
             height: 40px;
-            background-color: #5c6879;
+            background-color: #256126;
             color: white;
             font-size: 1.1rem;
             display: flex;

@@ -145,7 +145,7 @@ system_prompt2 = """
         - Identify the four linguistic categories that most strongly support the model’s prediction.
         - Summarize these four categories and their implications in **bullet points**, beginning each bullet with the exact name of the linguistic category (e.g., **Lexical Richness:**).
         - For each bullet point, include specific **examples or evidence from the text** to support it.
-        - Write the final prediction (healthy or cognitively impaired) in **one short sentence**.
+        - Write the final prediction (healthy or cognitively impaired) in **one short sentence** without using bullet point.
 
         **Do not add extra explanations or points.**
         **Avoid referencing any quantitative measurements from the text or offering suggestions for further analysis.**
@@ -316,20 +316,20 @@ class TextInterpreter:
         prompt= system_prompt2.format(text=transcription , analysis_text=analysis_text,model_pred=self.label_mapping[model_pred],model_conf=model_conf )
 
         return prompt,self._call_llm(prompt)
-    
+
     def get_all_interpretations(self,transcription,predicted_label, shap_values, features, probabilities):
         """
         Runs all interpretation steps and returns their results.
-        
+
         Args:
             shap_values: SHAP values for interpretation
             features: Linguistic features for interpretation
             probabilities: Model confidence probabilities
-            
+
         Returns:
-            tuple: (prompt1, shap_interp, 
-                prompt2, ling_interp, 
-                prompt3, combined_interp, 
+            tuple: (prompt1, shap_interp,
+                prompt2, ling_interp,
+                prompt3, combined_interp,
                 prompt4, final_interp)
         """
         # SHAP values interpretation
@@ -339,7 +339,7 @@ class TextInterpreter:
             shap_index=predicted_label,
             model_conf=probabilities[predicted_label]
         )
-        
+
         # Linguistic features interpretation
         prompt2, ling_interp = self.linguistic_features_interpretation(
             transcription=transcription,
@@ -347,7 +347,7 @@ class TextInterpreter:
             model_pred=predicted_label,
             model_conf=probabilities[predicted_label]
         )
-        
+
         # Combined interpretation
         prompt3, combined_interp = self.combine_interpretation(
             transcription=transcription,
@@ -356,7 +356,7 @@ class TextInterpreter:
             model_pred=predicted_label,
             model_conf=probabilities[predicted_label]
         )
-        
+
         # Final interpretation
         prompt4, final_interp = self.generate_final_interpretation(
             transcription=transcription,
@@ -364,7 +364,7 @@ class TextInterpreter:
             model_pred=predicted_label,
             model_conf=probabilities[predicted_label]
         )
-        
+
         return (prompt1, shap_interp,
                 prompt2, ling_interp,
                 prompt3, combined_interp,

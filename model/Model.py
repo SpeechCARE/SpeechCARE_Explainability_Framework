@@ -252,6 +252,7 @@ class TBNet(nn.Module):
             "embeddings": embeddings.cpu().numpy(),
             "segments_tensor": input_values.squeeze(0).cpu().numpy()
         }
+    
     def preprocess_data(self,audio_path,segment_length,demography_info, overlap=0.2, target_sr=16000):
         audio_path = str(audio_path)
         input_ids,attention_mask,demography_tensor = None,None,None
