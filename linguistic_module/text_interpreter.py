@@ -143,7 +143,7 @@ system_prompt2 = """
         Your task is to:
         - Read the analysis carefully.
         - Identify the four linguistic categories that most strongly support the model’s prediction.
-        - Summarize these four categories and their implications in **bullet points**, beginning each bullet with the exact name of the linguistic category (e.g., **Lexical Richness:**).
+        - Summarize these four categories and their implications in **bullet points**, beginning each bullet with **the exact name** of the six linguistic categories (Lexical Richness, Syntactic Complexity, Disfluencies and Repetition, Semantic Coherence, Difficulty with Spatial Reasoning and Visualization, and Impaired Executive Function).
         - For each bullet point, include specific **examples or evidence from the text** to support it.
         - Write the final prediction (healthy or cognitively impaired) in **one short sentence** without using bullet point.
 
