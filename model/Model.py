@@ -299,7 +299,7 @@ class TBNet(nn.Module):
             )
 
         # Check that all required tensors are available
-        if None in [input_values, input_ids, attention_mask, demography_tensor]:
+        if audio_path is None and None in [input_values, input_ids, attention_mask, demography_tensor]:
             raise ValueError("Missing input tensors. Provide either audio_path and demography_info or all tensors directly.")
 
         # Move to device
