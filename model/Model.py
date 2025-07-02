@@ -138,10 +138,10 @@ class TBNet(nn.Module):
         input_values = input_values.view(batch_size * num_segments, seq_length)
 
         if self.config.speech_transformer_chp == self.config.mHuBERT:
-            speech_embeddings = self.speech_transformer(input_values)
+            speech_embeddings = self.speech_transformer(input_values).last_hidden_state
         elif self.config.speech_transformer_chp == self.config.WHISPER:
-            speech_embeddings = self.speech_transformer.encode(input_values)
-
+            speech_embeddings = self.speech_transformer.encode(input_values).last_hidden_state
+            
         speech_embeddings = speech_embeddings.view(batch_size, num_segments, -1, speech_embeddings.size(-1))
         speech_embeddings = speech_embeddings.view(batch_size, num_segments * speech_embeddings.size(2), -1)
 
@@ -281,22 +281,23 @@ class TBNet(nn.Module):
     def inference(
         self,
         config,
+        demography_info,
         input_values=None,
         input_ids=None,
         attention_mask=None,
-        demography_tensor=None,
         audio_path=None,
-        demography_info=None,
     ):
         device = next(self.parameters()).device
 
         if audio_path is not None:
 
-            input_values, input_ids, attention_mask, demography_tensor = self.preprocess_data(
+            input_values,input_ids,attention_mask,_ = self.preprocess_data(
                 audio_path,
                 segment_length=config.segment_size,
                 demography_info=demography_info
             )
+
+        demography_tensor = torch.tensor([demography_info], dtype=torch.float32).unsqueeze(0)
 
         # Check that all required tensors are available
         if audio_path is None and None in [input_values, input_ids, attention_mask, demography_tensor]:
