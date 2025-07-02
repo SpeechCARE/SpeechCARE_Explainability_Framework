@@ -11,6 +11,27 @@ import pandas as pd
 
 import scipy.signal as signal
 
+import librosa
+
+
+def calculate_word_rate(audio_path, transcription):
+    # 1. Load audio to get duration
+    y, sr = librosa.load(audio_path, sr=None)
+    audio_duration = len(y) / sr  # in seconds
+
+    # 2. Count number of words in transcription
+    word_count = len(transcription.strip().split())
+
+    # 3. Compute word rate
+    words_per_second = word_count / audio_duration
+    words_per_minute = words_per_second * 60
+
+    return {
+        "word_count": word_count,
+        "duration_sec": audio_duration,
+        "WPS": words_per_second,
+        "WPM": words_per_minute
+    }
 
 def calculate_num_segments(audio_duration, segment_length, overlap, min_acceptable):
     """

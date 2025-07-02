@@ -217,6 +217,19 @@ css_style = f"""
             padding: 15px 0;
             font-weight: 600;
         }}
+        .consideration-section {{
+            position: relative; /* Enables absolute positioning inside it */
+        }}
+
+        .right-image {{
+            position: absolute;
+            right: 0;
+            top: 50px; /* adjust as needed */
+            width: 200px; /* or your preferred width */
+            opacity: 0.3; /* controls transparency */
+            pointer-events: none; /* makes sure it doesn’t block clicks */
+            z-index: 1;
+        }}
 
         /* Child expandable sections */
         .child-banner {{
@@ -504,7 +517,8 @@ def generate_html_report(
     clinical_factor,
     labTests,
     SDoH,
-    profileImage="data/profile.png",
+    profileImage="data/profile.jpeg",
+    decorationImage = "data/decoration.png",
     pieChart="data/pie_chart.png",
     audioFile="data/qnvo.mp3",
     significantFactors=None,
@@ -601,6 +615,7 @@ def generate_html_report(
     # Encode files
     profile_b64 = encode_file_base64(profileImage)
     piechart_b64 = encode_file_base64(pieChart)
+    decoration_b64 = encode_file_base64(decorationImage)
     audio_b64 = encode_file_base64(audioFile)
 
 
@@ -752,7 +767,7 @@ def generate_html_report(
             </div>
 
             <!-- Consideration Section -->
-            <div class="container">
+            <div class="container consideration-section">
                 <div class="vertical_box">
                     <div class="banner">Consideration</div>
                     <p>
@@ -768,6 +783,7 @@ def generate_html_report(
                         </div>
                     </div>
                 </div>
+                <img src="data:image/png;base64,{decoration_b64}" alt="Decoration" class="right-image">
             </div>
 
             <script>
