@@ -786,10 +786,12 @@ def text(
         xmin,
         xmax,
         output_name,
+
     )
-    # out += (
-    #     "<div align='center'><div style=\"color: rgb(0,0,0); font-size: 12px; margin-bottom:25px;margin-top: -15px;\">transcript text</div>"
-    # )
+    #transcript text
+    out += (
+        "<div align='center'><div style=\"color: rgb(0,0,0); font-size: 12px; margin-bottom:25px;margin-top: -15px;\"></div>"
+    )
     for i, token in enumerate(tokens):
         scaled_value = 0.5 + 0.5 * values[i] / (cmax + 1e-8)
         if token in {'.', ',', '?', '!', ':', ';'}:
