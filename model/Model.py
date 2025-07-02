@@ -277,10 +277,32 @@ class TBNet(nn.Module):
 
 
         return input_values,input_ids,attention_mask,demography_tensor
-
-    def inference(self, input_values,input_ids,attention_mask,demography_tensor, config):
-
+    
+    def inference(
+        self,
+        config,
+        input_values=None,
+        input_ids=None,
+        attention_mask=None,
+        demography_tensor=None,
+        audio_path=None,
+        demography_info=None,
+    ):
         device = next(self.parameters()).device
+
+        if audio_path is not None:
+
+            input_values, input_ids, attention_mask, demography_tensor = self.preprocess_data(
+                audio_path,
+                segment_length=config.segment_size,
+                demography_info=demography_info
+            )
+
+        # Check that all required tensors are available
+        if None in [input_values, input_ids, attention_mask, demography_tensor]:
+            raise ValueError("Missing input tensors. Provide either audio_path and demography_info or all tensors directly.")
+
+        # Move to device
         input_values = input_values.to(device)
         input_ids = input_ids.to(device)
         attention_mask = attention_mask.to(device)
