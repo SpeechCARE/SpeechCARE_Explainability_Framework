@@ -273,19 +273,51 @@ def overlay_pauses(ax, pauses, max_y):
 
 
 
-def plot_entropy(ax,total_duration, entropy_data, flat_segments=None):
-    ax.plot(entropy_data['times'], entropy_data['smoothed_entropy'], color='blue', label='Spectral Entropy')
-    if flat_segments:
-        for start, end in flat_segments:
-            ax.axvspan(start, end, color='red', alpha=0.3, label='Flat Segment' if start == flat_segments[0][0] else "")
+def plot_entropy(
+    ax=None,
+    total_duration=None,
+    entropy_data=None,
+    flat_segments=None,
+    return_base64=False
+):
+    """
+    Plot spectral entropy over time and optionally highlight flat segments.
+    Optionally return a base64 image for HTML embedding.
+    """
 
+    fig_created = False
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 3))
+        fig_created = True
+    else:
+        fig = ax.figure
+
+    # Plot entropy curve
+    ax.plot(entropy_data['times'], entropy_data['smoothed_entropy'], color='blue', label='Spectral Entropy')
+
+    # Highlight flat segments
+    if flat_segments:
+        for i, (start, end) in enumerate(flat_segments):
+            ax.axvspan(start, end, color='red', alpha=0.3, label='Flat Segment' if i == 0 else "")
+
+    # Formatting
     ax.set_title("Spectral Entropy")
     ax.set_ylabel("Entropy (bits)")
     set_time_ticks_ms(ax, total_duration)
-
     ax.legend(loc='upper right')
     ax.grid(True, alpha=0.3)
 
+    # Return as base64 image if requested
+    if return_base64 and fig_created:
+        buf = BytesIO()
+        fig.savefig(buf, format='png', bbox_inches='tight')
+        buf.seek(0)
+        image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        buf.close()
+        plt.close(fig)
+        return image_base64
+
+    return None
 
 
 
