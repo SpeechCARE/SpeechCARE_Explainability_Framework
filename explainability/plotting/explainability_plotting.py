@@ -46,7 +46,8 @@ def plot_colored_waveform(
     cmap_name="Reds",
     min_saliency=0.1,
     return_base64=False,
-    figsize = (10, 3)
+    figsize = (10, 3),
+    include_title=True
 ):
     """
     Plot a waveform where segments with saliency above a threshold are red,
@@ -87,7 +88,7 @@ def plot_colored_waveform(
     margin = 0.02 * (np.max(waveform) - np.min(waveform))
     ax.set_ylim(np.min(waveform) - margin, np.max(waveform) + margin)
     set_time_ticks_ms(ax, total_duration)
-    ax.set_title("Waveform")
+    if include_title: ax.set_title("Waveform")
     ax.set_ylabel("Amplitude")
 
     if return_base64 and fig_created:
@@ -280,7 +281,8 @@ def plot_entropy(
     entropy_data=None,
     flat_segments=None,
     return_base64=False,
-    figsize = (10, 3)
+    figsize = (10, 3),
+    include_title = True
 ):
     """
     Plot spectral entropy over time and optionally highlight flat segments.
@@ -303,7 +305,8 @@ def plot_entropy(
             ax.axvspan(start, end, color='red', alpha=0.3, label='Flat Segment' if i == 0 else "")
 
     # Formatting
-    ax.set_title("Spectral Entropy")
+    
+    if include_title: ax.set_title("Spectral Entropy")
     ax.set_ylabel("Entropy (bits)")
     set_time_ticks_ms(ax, total_duration)
     ax.legend(loc='upper right')
@@ -380,7 +383,8 @@ def plot_SHAP_highlighted_spectrogram(
         fade_alpha=0.36,
         blur_sigma=3,
         return_base64=False,
-        figsize = (10, 4)
+        figsize = (10, 4),
+        include_title = True
 ):
     """
     Plot a spectrogram with SHAP-based visual highlighting.
@@ -437,7 +441,7 @@ def plot_SHAP_highlighted_spectrogram(
                 ax.axvspan(frame_times[i], frame_times[min(i + 1, len(frame_times) - 1)],
                            ymin=0, ymax=1, color=overlay_color, alpha=fade_alpha)
 
-    ax.set_title(f"Spectrogram with SHAP Highlights")
+    if include_title: ax.set_title(f"Spectrogram with SHAP Highlights")
     ax.set_ylabel("Frequency (Hz)")
     set_time_ticks_ms(ax, total_duration)
 
