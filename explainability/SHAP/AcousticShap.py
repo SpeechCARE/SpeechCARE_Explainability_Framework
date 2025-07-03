@@ -22,13 +22,13 @@ DEFAULT_CUTOFF_FREQ = 8000
 
 
 class AcousticShap():
-    
+
     def __init__(self,model):
         self.model = model
         self.default_sr = 16000
         self.default_cutoff = DEFAULT_CUTOFF_FREQ
-        
-    
+
+
     def get_speech_shap_results(
         self,
         audio_path,
@@ -40,7 +40,7 @@ class AcousticShap():
         overlap=0.2,
         target_sr=16000,
         baseline_type='zeros'
-    ):
+      ):
         """
         Calculates SHAP values for the given audio file, creates a figure with a spectrogram
         and frequency Shannon entropy subplots, saves the figure to fig_save_path, and returns the figure.
@@ -91,25 +91,22 @@ class AcousticShap():
         fig_save_path = f"speech_shap_{os.path.basename(audio_path)}.png"
         plt.savefig(fig_save_path, dpi=600, bbox_inches="tight", transparent=True)
         return fig_save_path
-    
+
     def calculate_speech_shap_values(
         self,
-        audio_path,
-        segment_length=5,
-        overlap=0.2,
-        target_sr=16000,
+        input_values,
         baseline_type='zeros'
-    ):
-        result = self.model.speech_only_inference(
-            audio_path,
-            segment_length=segment_length,
-            overlap=overlap,
-            target_sr=target_sr,
-            device=self.model.device
-        )
+      ):
 
-        segments_tensor = torch.tensor(result["segments_tensor"]).to(self.model.device)  # Input tensor for SHAP
-        predictions = result["predictions"]
+        device = next(self.model.parameters()).device
+        input_values = input_values.clone().detach().to(device)
+        # print(input_values.shape)
+
+        self.model.eval()
+        with torch.no_grad():
+            predictions, embeddings = self.model.speech_only_forward(input_values, return_embeddings=True)
+
+        segments_tensor = input_values.squeeze(0)
 
         if baseline_type == 'zeros':
             baseline_data = torch.zeros_like(segments_tensor)  # Zero baseline
@@ -125,11 +122,11 @@ class AcousticShap():
             def __init__(self, model):
                 super().__init__()
                 self.model = model
-        
+
             def forward(self, x):
                 # Instead of calling self.model.forward(x)
                 return self.model.speech_only_forward(x)
-        
+
         explainer = shap.DeepExplainer(ModelWrapper(self.model), baseline_data)
 
         shap_values = explainer.shap_values(segments_tensor, check_additivity=False)  # Disable additivity check
@@ -140,9 +137,10 @@ class AcousticShap():
             "shap_values": shap_values,
             "shap_values_aggregated": shap_values_aggregated,
             "segments_tensor": segments_tensor.cpu().numpy(),
-            "predictions": predictions
+            "logits": predictions,
+            "predicted_label":torch.argmax(predictions, dim=1).item()
         }
-    
+
     def get_speech_spectrogram(
         self,
         audio_path: str,
@@ -164,7 +162,7 @@ class AcousticShap():
     ) -> Union[np.ndarray, Tuple[np.ndarray, ...]]:
         """
         Enhanced spectrogram analysis with spectral entropy and formant tracking support.
-        
+
         Args:
             audio_path: Path to audio file
             demography_info: Demographic information for model
@@ -181,23 +179,23 @@ class AcousticShap():
             baseline_type: SHAP baseline type
             fig_save_dir: Directory to save output figure
             plot: Whether to display the plot
-            
+
         Returns:
             Returns vary based on requested analyses:
             - Spectrogram only (default)
             - (spectrogram, entropy, flat_segments) if include_entropy=True
             - (spectrogram, formant_values) if formants_to_plot is not empty
             - (spectrogram, entropy, flat_segments, formant_values) if both are requested
-            
+
         Raises:
             ValueError: For invalid spectrogram_type
         """
         sr = sr or self.default_sr
-        
+
         # Validate inputs
         if spectrogram_type not in ["original", "shap"]:
             raise ValueError("spectrogram_type must be 'original' or 'shap'")
-            
+
         if formants_to_plot is None:
             formants_to_plot = []
 
@@ -220,7 +218,7 @@ class AcousticShap():
 
         # Initialize return values
         return_values = [spectrogram]
-        
+
         # Calculate and plot entropy if requested
         if include_entropy:
             times,smoothed_entropy, flat_segments = self.plot_entropy_analysis(
@@ -230,14 +228,14 @@ class AcousticShap():
                 **entropy_kwargs if entropy_kwargs else {}
             )
             return_values.extend([times,smoothed_entropy, flat_segments])
-        
+
         # Add formant values if requested
         if formants_to_plot:
             return_values.append(formant_values)
-        
+
         # Return appropriate tuple based on what was calculated
         return tuple(return_values) if len(return_values) > 1 else return_values[0]
-    
+
     def _generate_spectrogram(
         self,
         spec_type: str,
@@ -267,7 +265,7 @@ class AcousticShap():
                 plot=plot
             )
         else:
-        
+
             audio_label = self.model.inference(audio_path, demography_info, config)[0]
             shap_values = self.calculate_speech_shap_values(
                 audio_path,
@@ -276,7 +274,7 @@ class AcousticShap():
                 target_sr=sr,
                 baseline_type=baseline_type,
             )["shap_values"]
-            
+
             return self.visualize_shap_spectrogram(
                 ax=ax,
                 audio_path=audio_path,
@@ -316,7 +314,7 @@ class AcousticShap():
     def _smooth_signal(self, signal: np.ndarray, window_size: int) -> np.ndarray:
         """Smooth signal using moving average."""
         return np.convolve(signal, np.ones(window_size)/window_size, mode='valid')
-    
+
     def detect_flat_segments(
         self,
         entropy: np.ndarray,
@@ -329,7 +327,7 @@ class AcousticShap():
     ) -> List[Tuple[float, float]]:
         """
         Detect flat segments in entropy signal with advanced merging.
-        
+
         Args:
             entropy: Array of entropy values
             times: Corresponding time points
@@ -338,7 +336,7 @@ class AcousticShap():
             merge_gap: Maximum gap between segments to merge (seconds)
             segment_min_duration: Minimum duration for initial segments (seconds)
             final_min_duration: Minimum duration for final segments (seconds)
-            
+
         Returns:
             List of (start, end) tuples for flat segments
         """
@@ -348,14 +346,14 @@ class AcousticShap():
             np.std(entropy[max(0, i - half_window):min(len(entropy), i + half_window)])
             for i in range(len(entropy))
         ])
-        
+
         # Initial flat segment detection
         flat_mask = smooth_std < std_threshold
         segments = self._find_initial_segments(flat_mask, times, segment_min_duration)
-        
+
         # Merge nearby segments
         merged_segments = self._merge_segments(segments, merge_gap)
-        
+
         # Filter by final duration
         return [
             (start, end) for start, end in merged_segments
@@ -371,14 +369,14 @@ class AcousticShap():
         """Identify initial flat segments meeting duration requirement."""
         segments = []
         start_idx = None
-        
+
         for i in range(1, len(flat_mask)):
             if flat_mask[i] and not flat_mask[i - 1]:
                 start_idx = i
             elif not flat_mask[i] and flat_mask[i - 1] and start_idx is not None:
                 if times[i] - times[start_idx] >= min_duration:
                     segments.append((times[start_idx], times[i]))
-        
+
         return segments
 
     def _merge_segments(
@@ -389,17 +387,17 @@ class AcousticShap():
         """Merge nearby segments with small gaps between them."""
         if not segments:
             return []
-            
+
         merged = [list(segments[0])]
-        
+
         for current_start, current_end in segments[1:]:
             last_start, last_end = merged[-1]
-            
+
             if current_start - last_end <= max_gap:
                 merged[-1][1] = current_end  # Extend previous segment
             else:
                 merged.append([current_start, current_end])
-                
+
         return [tuple(seg) for seg in merged]
 
     def plot_entropy_analysis(
@@ -417,39 +415,39 @@ class AcousticShap():
     ) -> List[Tuple[float, float]]:
         """
         Complete entropy analysis with visualization.
-        
+
         Args:
             audio_path: Path to audio file
             sr: Target sampling rate
             cutoff: Low-pass cutoff frequency
             window_size: Smoothing window size
             min_duration: Minimum flat segment duration
-            segments_std_threshold: Maximum standard deviation threshold for 
-                                   considering a segment as "flat" (lower values 
+            segments_std_threshold: Maximum standard deviation threshold for
+                                   considering a segment as "flat" (lower values
                                    detect more stable segments)
-            segments_merge_gap: Maximum time gap in seconds between adjacent flat 
+            segments_merge_gap: Maximum time gap in seconds between adjacent flat
                               segments to allow merging
             figsize: Figure dimensions
             dpi: Figure resolution
-            
+
         Returns:
             Value of the calculated entropy
             List of detected flat segments as (start, end) tuples
         """
         sr = sr or self.default_sr
         cutoff = cutoff or self.default_cutoff
-        
+
         # Load and process audio
         signal, orig_sr = librosa.load(audio_path, sr=None)
         filtered_signal = self._low_pass_filter(signal, orig_sr, cutoff)
         resampled_signal = librosa.resample(filtered_signal, orig_sr=orig_sr, target_sr=sr)
-        
+
         # Calculate entropy
         stft = librosa.stft(resampled_signal, n_fft=1024, hop_length=512)
         entropy = self._shannon_entropy(stft)
         times = librosa.frames_to_time(np.arange(len(entropy)), sr=sr, hop_length=512)
         smoothed_entropy = self._smooth_signal(entropy, window_size)
-        
+
         # Detect flat segments
         flat_segments = self.detect_flat_segments(
             smoothed_entropy,
@@ -458,23 +456,23 @@ class AcousticShap():
             merge_gap=segments_merge_gap,
             final_min_duration=min_duration
         )
-        
+
         # Create visualization
         plt.figure(figsize=figsize, dpi=dpi)
-        plt.plot(times[:len(smoothed_entropy)], smoothed_entropy, 
+        plt.plot(times[:len(smoothed_entropy)], smoothed_entropy,
                 label='Smoothed Shannon Entropy', color='blue')
-        
+
         for start, end in flat_segments:
-            plt.axvspan(start, end, color='red', alpha=0.3, 
+            plt.axvspan(start, end, color='red', alpha=0.3,
                        label='Flat Segment' if start == flat_segments[0][0] else "")
-        
+
         plt.xticks(np.arange(0, np.max(times), step=1))
         plt.grid(axis='x')
         plt.xlabel('Time (seconds)')
         plt.ylabel('Entropy (bits)')
         plt.title('Spectral Entropy Analysis')
         plt.tight_layout()
-        
+
 
         if fig_save_path:
             # folder_path = os.path.dirname(fig_save_path)
@@ -484,10 +482,10 @@ class AcousticShap():
         print("Detected flat segments (start, end in seconds):")
         for seg in flat_segments:
             print(f"{seg[0]:.2f} - {seg[1]:.2f}")
-        
+
         return times,smoothed_entropy, flat_segments
 
-    
+
     def moving_average(self, data, window_size=5):
         return np.convolve(data, np.ones(window_size) / window_size, mode='valid')
 
@@ -504,7 +502,7 @@ class AcousticShap():
         """
         Visualize and return the original spectrogram with formants and pauses.
         Matches the style of visualize_shap_spectrogram() exactly except for SHAP modifications.
-        
+
         Args:
             audio_path (str): Path to audio file
             sr (int): Sample rate
@@ -513,7 +511,7 @@ class AcousticShap():
             fig_save_path (str): Path to save figure
             ax (matplotlib.axes): Existing axis to plot on
             plot (bool): Whether to display the plot
-            
+
         Returns:
             np.ndarray: The original log-power mel spectrogram in dB
         """
@@ -528,9 +526,9 @@ class AcousticShap():
             fig, ax = plt.subplots(figsize=(20, 4))
 
         # Plot original spectrogram (same colormap as SHAP version)
-        img = librosa.display.specshow(log_S, sr=sr, x_axis="time", y_axis="mel", 
+        img = librosa.display.specshow(log_S, sr=sr, x_axis="time", y_axis="mel",
                                      cmap="viridis", ax=ax)
-        
+
         # Get max mel frequency for pause plotting
         max_mel = img.axes.yaxis.get_data_interval()[-1]
 
@@ -538,20 +536,20 @@ class AcousticShap():
         if pauses:
             ax.plot([0, 0, 0, 0, 0], [0, 0, 0, 0, 0], color="yellow", linestyle="-", linewidth=2, label="Informative Pause")
             ax.plot([0, 0, 0, 0, 0], [0, 0, 0, 0, 0], color="yellow", linestyle="--", linewidth=2, label="Natural Pause")
-       
+
             for start, end, _, _, _, _, mark in pauses:
                 linestyle = "-" if mark else "--"
-                ax.plot([start, start, end, end, start], 
-                        [0, max_mel, max_mel, 0, 0], 
-                        color="yellow", 
-                        linestyle=linestyle, 
+                ax.plot([start, start, end, end, start],
+                        [0, max_mel, max_mel, 0, 0],
+                        color="yellow",
+                        linestyle=linestyle,
                         linewidth=2)
 
         # Step 4: Axis formatting (identical to SHAP version)
         ax.set_xlabel("Time (ms)", fontsize=16)
         ax.set_ylabel("Frequency (Hz)", fontsize=16)
         ax.set_xlim(0, audio_duration)
-        
+
         # X-axis ticks in milliseconds (same as SHAP version)
         time_ticks_ms = np.arange(0, audio_duration * 1000, 500)  # Every 500 ms
         time_ticks_seconds = time_ticks_ms / 1000
@@ -591,9 +589,9 @@ class AcousticShap():
             plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
         if plot:
             plt.show()
-            
+
         return formant_values , log_S
-    
+
     def visualize_shap_spectrogram(
         self,
         audio_path,
@@ -622,9 +620,9 @@ class AcousticShap():
             merge_frame_duration (float): Duration of merged frames in seconds.
             formants_to_plot (list): List of formants to plot (e.g., ["F0", "F1", "F2", "F3"]).
             fig_save_path (str, optional): Path to save the figure.
-            pauses (list): List of pauses to plot. 
+            pauses (list): List of pauses to plot.
             ax (matplotlib.axes.Axes, optional): Axis to plot on for subplots. If None, creates a new plot.
-            plot (bool): Whether to display the plot. Default is False. 
+            plot (bool): Whether to display the plot. Default is False.
 
         Returns:
             None: Displays or saves the spectrogram.
@@ -706,7 +704,7 @@ class AcousticShap():
             # # Create proxy artists for the legend
             ax.plot([0, 0, 0, 0, 0], [0, 0, 0, 0, 0], color="yellow", linestyle="-", linewidth=2, label="Informative Pause")
             ax.plot([0, 0, 0, 0, 0], [0, 0, 0, 0, 0], color="yellow", linestyle="--", linewidth=2, label="Natural Pause")
-       
+
             for start, end, _, _, _, _, mark in pauses:
                 # Use solid yellow for pauses with a mark, dashed yellow otherwise
                 linestyle = "-" if mark else "--"
@@ -741,7 +739,7 @@ class AcousticShap():
             # os.makedirs(folder_path, exist_ok=True)
             plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
 
-        if plot: 
+        if plot:
             plt.show()
-            
+
         return formant_values, modified_log_S
