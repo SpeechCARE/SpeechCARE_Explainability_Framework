@@ -122,5 +122,3 @@ def compute_saliency_waveform(model, audio_path, input_segments, target_class=No
         'class_name': model.label_rev_map.get(target_class, str(target_class)),
         'actual_duration': original_length / target_sr
     }
-
-
