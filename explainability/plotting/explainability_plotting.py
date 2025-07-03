@@ -284,7 +284,8 @@ def plot_entropy(
     flat_segments=None,
     return_base64=False,
     figsize = (10, 3),
-    include_title = True
+    include_title = True,
+    legend_size=10
 ):
     """
     Plot spectral entropy over time and optionally highlight flat segments.
@@ -312,7 +313,7 @@ def plot_entropy(
     if include_title: ax.set_title("Spectral Entropy")
     ax.set_ylabel("Entropy (bits)")
     set_time_ticks_ms(ax, total_duration)
-    ax.legend(loc='upper right')
+    ax.legend(loc='upper right', prop={'size': legend_size})
     ax.grid(True, alpha=0.3)
 
     # Return as base64 image if requested
@@ -389,7 +390,8 @@ def plot_SHAP_highlighted_spectrogram(
         blur_sigma=3,
         return_base64=False,
         figsize = (10, 4),
-        include_title = True
+        include_title = True,
+        legend_size=10
 ):
     """
     Plot a spectrogram with SHAP-based visual highlighting.
@@ -456,7 +458,7 @@ def plot_SHAP_highlighted_spectrogram(
         legend_handles.extend(formant_handles)
 
     if legend_handles:
-        ax.legend(handles=legend_handles, loc='upper right')
+        ax.legend(handles=legend_handles, loc='upper right', prop={'size': legend_size})
 
 
     if include_title: ax.set_title(f"Spectrogram with SHAP Highlights")
