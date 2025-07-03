@@ -84,6 +84,8 @@ def plot_colored_waveform(
         lc.set_array(saliency_avg)
         ax.add_collection(lc)
 
+   
+
     # Set limits and ticks
     margin = 0.02 * (np.max(waveform) - np.min(waveform))
     ax.set_ylim(np.min(waveform) - margin, np.max(waveform) + margin)
@@ -305,6 +307,7 @@ def plot_entropy(
             ax.axvspan(start, end, color='red', alpha=0.3, label='Flat Segment' if i == 0 else "")
 
     # Formatting
+
     
     if include_title: ax.set_title("Spectral Entropy")
     ax.set_ylabel("Entropy (bits)")
@@ -369,6 +372,8 @@ def plot_SHAP_highlighted_spectrogram(
         total_duration=None,
         audio_path=None,
         shap_values=None,
+        pauses=None,
+        formants_data=None,
         label=0,
         visualization_mode=1,
         overlay_negatives=True,
@@ -440,6 +445,19 @@ def plot_SHAP_highlighted_spectrogram(
             if mask_overlay[i] > 0:
                 ax.axvspan(frame_times[i], frame_times[min(i + 1, len(frame_times) - 1)],
                            ymin=0, ymax=1, color=overlay_color, alpha=fade_alpha)
+                
+    legend_handles = []
+
+    if pauses:
+        pause_handles = overlay_pauses(ax, pauses, sr // 2)
+        legend_handles.extend(pause_handles)
+    if formants_data:
+        formant_handles = overlay_formants(ax, formants_data, audio_path)
+        legend_handles.extend(formant_handles)
+
+    if legend_handles:
+        ax.legend(handles=legend_handles, loc='upper right')
+
 
     if include_title: ax.set_title(f"Spectrogram with SHAP Highlights")
     ax.set_ylabel("Frequency (Hz)")
