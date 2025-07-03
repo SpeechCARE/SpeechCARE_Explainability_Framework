@@ -3,6 +3,23 @@ import torchaudio
 import numpy as np
 import torch.nn.functional as F
 from scipy.signal import find_peaks, convolve
+from scipy import interpolate
+
+
+def normalize_saliency(saliency, threshold):
+    return np.clip((saliency - threshold) / (1 - threshold), 0, 1)
+
+def interpolate_saliency(saliency_data, target_times,min_saliency=0.6):
+    # saliency = smooth_saliency_gaps(saliency_data['saliency'], window_size=10, overlap=2, high_thresh=0.4, gap_fill_thresh=0.5)
+    # saliency = np.where(saliency_data['saliency'] <min_saliency , min_saliency, saliency_data['saliency'])
+    saliency = saliency_data['saliency']
+    return interpolate.interp1d(
+        saliency_data['time'],
+        saliency,
+        kind='linear',
+        bounds_error=False,
+        fill_value=0
+    )(target_times)
 
 
 def load_and_resample(audio_path, target_sr=16000):
