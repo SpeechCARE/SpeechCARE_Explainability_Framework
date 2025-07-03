@@ -9,6 +9,10 @@ from scipy.ndimage import gaussian_filter1d
 import os
 from explainability.Gradient_based.saliency_map import interpolate_saliency
 from explainability.plotting.utils import compute_log_spectrogram ,compute_formants
+import base64
+import io
+from io import BytesIO
+
 
 def set_time_ticks_ms(ax, total_duration, step_ms=1000, rotation=45):
     """
@@ -33,56 +37,71 @@ def plot_waveform_and_saliency(ax, total_duration, saliency_data):
     ax.legend(loc="upper right")
     set_time_ticks_ms(ax, total_duration)
 
-def plot_colored_waveform(ax, total_duration, saliency_data,plot_method ,threshold=0.5, cmap_name="Reds",min_saliency=0.1):
+def plot_colored_waveform(
+    ax=None,
+    total_duration=None,
+    saliency_data=None,
+    plot_method='threshold',
+    threshold=0.5,
+    cmap_name="Reds",
+    min_saliency=0.1,
+    return_base64=False
+):
     """
     Plot a waveform where segments with saliency above a threshold are red,
-    and others are gray.
+    and others are gray. Optionally return base64 image for HTML embedding.
     """
+    fig_created = False
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 3))
+        fig_created = True
+    else:
+        fig = ax.figure
+
     saliency = saliency_data['saliency']
     waveform = saliency_data['waveform']
     time = saliency_data['time']
 
-    # Create line segments between consecutive points
+    # Create line segments
     points = np.array([time, waveform]).T.reshape(-1, 1, 2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
 
     if plot_method == "threshold":
-
-        # Average saliency between segment endpoints
         saliency_avg = (saliency[:-1] + saliency[1:]) / 2
-
-        # Split segments by saliency threshold
         high_saliency_segments = segments[saliency_avg > threshold]
         low_saliency_segments = segments[saliency_avg <= threshold]
-
-        # Create line collections
         lc_high = LineCollection(high_saliency_segments, colors='#ae0344', linewidth=1.0)
         lc_low = LineCollection(low_saliency_segments, colors='lightgray', linewidth=1.0)
-
         ax.add_collection(lc_low)
         ax.add_collection(lc_high)
     else:
-        saliency_norm = np.where(saliency <min_saliency , min_saliency, saliency)
-
-        # Average saliency for each segment
+        saliency_norm = np.where(saliency < min_saliency, min_saliency, saliency)
         saliency_avg = (saliency_norm[:-1] + saliency_norm[1:]) / 2
-
-        # Load reversed colormap to make high saliency darker
         cmap = plt.get_cmap(cmap_name)
-
-        # Create line collection with saliency-based colors
         lc = LineCollection(segments, cmap=cmap, norm=plt.Normalize(0, 1), linewidth=1.0)
         lc.set_array(saliency_avg)
         ax.add_collection(lc)
 
-    # Set y-limits with small margin
+    # Set limits and ticks
     margin = 0.02 * (np.max(waveform) - np.min(waveform))
     ax.set_ylim(np.min(waveform) - margin, np.max(waveform) + margin)
-
-    # Set time ticks
     set_time_ticks_ms(ax, total_duration)
     ax.set_title("Waveform")
     ax.set_ylabel("Amplitude")
+
+    if return_base64 and fig_created:
+        from io import BytesIO
+        import base64
+
+        buf = BytesIO()
+        fig.savefig(buf, format='png', bbox_inches='tight')
+        buf.seek(0)
+        image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        buf.close()
+        plt.close(fig)
+        return image_base64
+
+    return None
 
 
 def plot_saliency_weighted_spectrogram(
@@ -309,11 +328,11 @@ def compute_time_masks(shap_values, sr, merge_frame_duration, S, mode, overlay_n
     return mask_overlay, alpha_mask, blur_mask
 
 def plot_SHAP_highlighted_spectrogram(
-        ax,
-        total_duration,
-        audio_path,
-        shap_values,
-        label,
+        ax=None,
+        total_duration=None,
+        audio_path=None,
+        shap_values=None,
+        label=0,
         visualization_mode=1,
         overlay_negatives=True,
         blur_negatives=False,
@@ -325,40 +344,30 @@ def plot_SHAP_highlighted_spectrogram(
         overlap=0.2,
         merge_frame_duration=0.3,
         fade_alpha=0.36,
-        blur_sigma=3
-
+        blur_sigma=3,
+        return_base64=False
 ):
-
     """
     Plot a spectrogram with SHAP-based visual highlighting.
-
-    visualization_mode:
-        1 - Show only positive SHAP values.
-            Overlay color on non-positive (zero or negative) regions.
-
-        2 - Show only positive SHAP values.
-            Overlay color on non-positive regions AND vary opacity
-            based on the magnitude of positive SHAPs (more important = more visible).
-
-        3 - Use all SHAP values.
-            Map full SHAP range to opacity (low SHAP = faded, high SHAP = bold).
-
-        Additional options:
-            overlay_negatives (bool): If True, overlays non-positive regions with color.
-            blur_negatives (bool): If True, applies blur effect on non-positive regions.
+    Optionally returns a base64-encoded image for HTML embedding.
     """
-    name = os.path.splitext(os.path.basename(audio_path))[0]
 
-    # Load audio and compute spectrogram
+    fig_created = False
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 4))
+        fig_created = True
+    else:
+        fig = ax.figure
+
+    # Load and compute spectrogram
     audio, _ = librosa.load(audio_path, sr=sr)
     S = librosa.feature.melspectrogram(y=audio, sr=sr, n_fft=2048, hop_length=hop_length, power=2.0)
     log_S = librosa.power_to_db(S, ref=np.max)
 
-    # SHAP aggregation
+    # Aggregate SHAP values
     shap_values_label = shap_values[0, :, :, label]
-
-
     merge_samples = int(merge_frame_duration * sr)
+
     merged_shap_values = []
     for segment in shap_values_label:
         trimmed = segment[: len(segment) // merge_samples * merge_samples]
@@ -374,45 +383,41 @@ def plot_SHAP_highlighted_spectrogram(
         blur_negatives=blur_negatives
     )
 
-    # Apply blur if needed
     if blur_negatives:
         log_S = apply_blur(log_S, blur_mask[np.newaxis, :], sigma=blur_sigma)
 
-    # Plot spectrogram with alpha mask
+    # Time axis
     frame_times = librosa.frames_to_time(np.arange(S.shape[1]), sr=sr, hop_length=hop_length)
 
-    # # Plot base spectrogram (not faded at all)
-    # ax.imshow(log_S, aspect='auto', origin='lower',
-    #           extent=[frame_times[0], frame_times[-1], 0, sr // 2],
-    #           cmap=colormap, alpha=1.0)
-    
+    # Plot spectrogram
     for i in range(S.shape[1]):
-        ax.imshow(log_S[:, i:i+1], aspect='auto', origin='lower',
-                  extent=[frame_times[i], frame_times[min(i+1, len(frame_times)-1)], 0, sr // 2],
+        ax.imshow(log_S[:, i:i + 1], aspect='auto', origin='lower',
+                  extent=[frame_times[i], frame_times[min(i + 1, len(frame_times) - 1)], 0, sr // 2],
                   cmap=colormap, alpha=alpha_mask[i])
 
-    # if visualization_mode==2:
-    #     # SHAP overlay (highlight high SHAPs using heatmap)
-    #     highlight_cmap = plt.get_cmap("plasma")  # Can change to "plasma", "magma", etc.
-    #     norm_shap = np.clip(merged_shap_values, 0, None)  # Use only positive SHAPs
-    #     norm_shap = (norm_shap - np.min(norm_shap)) / (np.max(norm_shap) - np.min(norm_shap) + 1e-6)
-    #     shap_overlay = np.tile(norm_shap, (log_S.shape[0], 1))  # Match spectrogram shape
-
-    #     ax.imshow(shap_overlay, aspect='auto', origin='lower',
-    #             extent=[frame_times[0], frame_times[-1], 0, sr // 2],
-    #             cmap=highlight_cmap, alpha=0.4)
-
-    # Overlay masked areas
+    # Overlay negatives
     if overlay_negatives:
         for i in range(S.shape[1]):
             if mask_overlay[i] > 0:
-                ax.axvspan(frame_times[i], frame_times[min(i+1, len(frame_times)-1)],
+                ax.axvspan(frame_times[i], frame_times[min(i + 1, len(frame_times) - 1)],
                            ymin=0, ymax=1, color=overlay_color, alpha=fade_alpha)
 
-    # Finalize
     ax.set_title(f"Spectrogram with SHAP Highlights")
     ax.set_ylabel("Frequency (Hz)")
     set_time_ticks_ms(ax, total_duration)
+
+    # Return image if needed
+    if return_base64 and fig_created:
+        buf = BytesIO()
+        fig.savefig(buf, format='png', bbox_inches='tight')
+        buf.seek(0)
+        image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        buf.close()
+        plt.close(fig)
+        return image_base64
+
+    return None
+
 
 
 
