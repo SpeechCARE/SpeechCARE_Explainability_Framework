@@ -17,17 +17,27 @@ from io import BytesIO
 def set_time_ticks_ms(ax, total_duration, step_ms=1000, rotation=45):
     """
     Set x-axis ticks in milliseconds with labeled ticks every `step_ms`.
+    Shows ticks every second but only labels every 3 seconds.
 
     Parameters:
     - ax: The matplotlib axis to apply the ticks to.
     - total_duration: Total duration of the audio in seconds.
-    - step_ms: Step between ticks in milliseconds (default 1000 ms).
+    - step_ms: Step between ticks in milliseconds (default 1000 ms = 1 sec).
     - rotation: Label rotation angle (default 45 degrees).
     """
+    # Generate ticks every second (1000 ms)
     time_ticks_ms = np.arange(0, int(total_duration * 1000) + step_ms, step_ms)
-    ax.set_xticks(time_ticks_ms / 1000)
-    ax.set_xticklabels([str(int(t/1000)) for t in time_ticks_ms], rotation=rotation, fontsize=8)
-
+    ax.set_xticks(time_ticks_ms / 1000)  # Convert to seconds
+    
+    # Generate labels (only every 3 seconds)
+    labels = [
+        str(int(t / 1000)) if (int(t / 1000) % 3 == 0) else "" 
+        for t in time_ticks_ms
+    ]
+    
+    ax.set_xticklabels(labels, rotation=rotation, fontsize=8)
+    ax.set_xlabel("Time (seconds)")
+    
 def plot_waveform_and_saliency(ax, total_duration, saliency_data):
     ax.plot(saliency_data['time'], saliency_data['waveform'], label="Waveform", alpha=0.7)
     ax.plot(saliency_data['time'], saliency_data['saliency'], label="Saliency", color="red", alpha=0.7)

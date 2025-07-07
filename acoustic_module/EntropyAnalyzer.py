@@ -244,7 +244,7 @@ class EntropyAnalyzer:
             plt.axvspan(start, end, color='green', alpha=0.3, label='Flat Segment' if start == flat_segments[0][0] else "")
 
         plt.xlabel('Time (s)')
-        plt.ylabel('Entropy')
+        plt.ylabel('Normalized Entropy')
         plt.title('Entropy Analysis with Flat Segments')
         plt.legend()
         plt.tight_layout()
