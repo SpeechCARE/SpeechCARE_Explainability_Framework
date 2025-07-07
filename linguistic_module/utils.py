@@ -1,3 +1,136 @@
+def format_items(text, title_color="#1E3658", prediction_color="#1E3658"):
+
+    lines = text.strip().split('\n')
+
+
+    bullet_symbols = ('*', '•')
+    bullet_start_index = next(
+        (i for i, line in enumerate(lines) if line.strip().startswith(bullet_symbols)),
+        0
+    )
+    relevant_lines = lines[bullet_start_index:]
+
+    html_output = []
+
+    for idi,line in enumerate(relevant_lines):
+        bullet_symbols = ('*', '•')
+        line = line.strip().lstrip(''.join(bullet_symbols)).strip()
+
+        if not line:
+            continue
+
+        if idi== len(relevant_lines)-1:
+            html_output.append(
+                f'<div class="signif_item">'
+                f'<b style="color:{prediction_color}">{line}</b>'
+                f'</div>'
+            )
+        else:
+            try:
+                title_part, body_part = line.split(':', maxsplit=1)
+                title = title_part.replace("**", "").strip()
+                body = body_part.strip().replace("**", "")
+                html_output.append(
+                    f'<div class="signif_item">'
+                    f'<span class="bullet_point"></span>'
+                    f'<b style="color:{title_color}; white-space:nowrap">{title}:</b> {body}'
+                    f'</div>'
+                )
+            except ValueError:
+                # If there's a formatting issue
+                html_output.append(
+                    f'<div class="signif_item">{line}</div>'
+                )
+
+    return html_output
+def generate_final_linguistic_interpretation_html(text, title_color="#1E3658", prediction_color="#1E3658"):
+    """
+    Generates complete HTML document with styled linguistic interpretation.
+    
+    Args:
+        text (str): Raw interpretation text with bullet points
+        title_color (str): Color for category titles (default: #1E3658)
+        prediction_color (str): Color for prediction text (default: #1E3658)
+        
+    Returns:
+        str: Complete HTML document as string
+    """
+    # Process the text using your existing function
+    content_blocks = format_items(text, title_color, prediction_color)
+    
+    # Create the complete HTML document
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                background-color: white;
+                color: #333;
+                line-height: 1.6;
+                max-width: 1000px;
+                margin: 0 auto;
+                padding: 20px;
+            }}
+            .interpretation-container {{
+                background-color: white;
+                border-radius: 5px;
+                padding: 20px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            }}
+            .signif_item {{
+                margin: 12px 0;
+                padding-left: 20px;
+                position: relative;
+            }}
+      
+            .bullet_point {{
+                display: inline-block;
+                width: 8px !important;
+                height: 8px !important;
+                background-color: #1E3658;
+                border-radius: 50%;
+                margin-right: 8px;
+                margin-top: 7px;
+            }}
+            .prediction {{
+                margin-top: 20px;
+                padding: 10px 15px;
+                background-color: #f8f9fa;
+                font-weight: bold;
+            }}
+            .category-title {{
+                color: {title_color};  /* DARK BLUE */
+                font-weight: bold;
+                white-space: nowrap;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="interpretation-container">
+    """
+    
+    # Add processed content
+    for block in content_blocks:
+        # Special handling for prediction line
+        if "The speaker is" in block:
+            html += f"""
+            <div class="prediction" style="color:{prediction_color}">
+                {block.replace('<div class="signif_item">', '').replace('</div>', '')}
+            </div>
+            """
+        else:
+            html += block
+    
+    html += """
+        </div>
+    </body>
+    </html>
+    """
+    
+    return html
+
 def visualize_linguistic_features(feature_dict):
     """
     Generates a clean HTML table for linguistic features, grouped by category.
