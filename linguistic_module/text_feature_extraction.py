@@ -397,7 +397,7 @@ class TextFeatureExtractor:
 
         if pos_columns:
             speech_counts = df[pos_columns].sum(axis=1).values
-            df["Speech rate"] = speech_counts / rate_denominator
+            df["Speech rate (wps)"] = speech_counts / rate_denominator
         else:
             df["Speech rate"] = 0
 

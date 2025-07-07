@@ -53,11 +53,12 @@ system_prompt3 = """
     Keep your output concise, well-supported, insightful, and relevant to cognitive assessment, using bullet points, with each point describing one key aspect of the analysis.
 
     ---
+
     ## Detailed Explanation Linguistic Features:
     • Lexical Richness: Reduced vocabulary diversity may reflect word-finding difficulties and lexical retrieval deficits.
-        •• Type-Token Ratio (TTR): (0-1) LOW: limited vocab; HIGH: diverse vocab
-        •• Root Type-Token Ratio (RTTR): (0-1) LOW: simple vocab; HIGH: varied vocab
-        •• Corrected Type-Token Ratio (CTTR): (0-1) LOW: restricted vocab; HIGH: rich vocab
+        •• Type-Token Ratio (TTR): (0-1) LOW: Repetitive; HIGH: diverse 
+        •• Root Type-Token Ratio (RTTR): (2.0-8.0 (Guiraud's Index)) LOW: simple vocab; HIGH: varied vocab
+        •• Corrected Type-Token Ratio (CTTR): (1.5-5.0 (Carroll's CTTR)) LOW: restricted vocab; HIGH: rich vocab
         •• Brunet's Index: (~10-100) LOW: diverse; HIGH: limited vocab
         •• Honoré's Statistic: (~0-2000) LOW: low richness; HIGH: high richness
         •• Measure of Textual Lexical Diversity (MTLD): (~10-150) LOW: limited vocab; HIGH: stable diversity
@@ -77,7 +78,7 @@ system_prompt3 = """
         •• Word count: (10-∞) LOW: brevity; HIGH: verbosity/planning
 
     • Disfluencies and Repetition: Frequent hesitations, fillers, or repeated phrases may reflect planning difficulties and reduced cognitive flexibility.
-        •• Speech rate: (wpm) LOW: slowed cognition; HIGH: normal/pressured
+        •• Speech rate (wps): (2.3-3.3 wps) LOW: slowed cognition; HIGH: normal/pressured
         •• Consecutive repeated clauses count: (0-∞) LOW: flexible; HIGH: perseveration
 
     • Semantic Coherence and Referential Clarity: Vague references and reduced cohesion may indicate impaired semantic organization and discourse tracking.
