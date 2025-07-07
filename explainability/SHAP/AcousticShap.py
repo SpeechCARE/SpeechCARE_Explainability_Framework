@@ -185,6 +185,12 @@ class AcousticShap():
         Raises:
             ValueError: For invalid spectrogram_type
         """
+        os.makedirs(fig_save_dir, exist_ok=True)  # Create dir if needed
+        audio_filename = os.path.splitext(os.path.basename(audio_path))[0]
+        fig_save_path = os.path.join(
+            fig_save_dir,
+            f"{audio_filename}_{spectrogram_type}_spectrogram.png"
+        )
         sr = sr or self.default_sr
 
         # Validate inputs
@@ -207,7 +213,7 @@ class AcousticShap():
             overlap=overlap,
             frame_duration=frame_duration,
             baseline_type=baseline_type,
-            fig_save_path = os.path.join(fig_save_dir,'spectrogram.png'),
+            fig_save_path =fig_save_path,
             plot=plot
         )
 
@@ -227,10 +233,11 @@ class AcousticShap():
         frame_duration: float,
         baseline_type: str,
         fig_save_path:str,
-        plot: bool= True
+        plot: bool= True,
+        figsize:Tuple[int, int] = (10,4)
     ) -> np.ndarray:
         """Internal method to generate appropriate spectrogram."""
-        fig, ax = plt.subplots(figsize=(20, 4))
+        fig, ax = plt.subplots(figsize=figsize)
         if spec_type == "original":
             return self.visualize_original_spectrogram(
                 ax=ax,
@@ -239,7 +246,8 @@ class AcousticShap():
                 formants_to_plot=formants,
                 pauses=pauses,
                 fig_save_path=fig_save_path,
-                plot=plot
+                plot=plot,
+                figsize=figsize
             )
         else:
 
@@ -263,7 +271,8 @@ class AcousticShap():
                 formants_to_plot=formants,
                 pauses=pauses,
                 fig_save_path=fig_save_path,
-                plot=plot
+                plot=plot,
+                figsize=figsize
             )
 
 
@@ -296,11 +305,12 @@ class AcousticShap():
         Returns:
             np.ndarray: The original log-power mel spectrogram in dB
         """
-        fig, ax = None, None
+        if not ax:
+            fig, ax = plt.subplots(figsize=figsize)
                 
         # Only create a figure if we need to plot or save
         if plot or fig_save_path:
-            fig, ax = plt.subplots(figsize=figsize)
+            
             plot_spectrogram(
                 ax=ax,
                 total_duration=None,
@@ -320,7 +330,7 @@ class AcousticShap():
             else:
                 plt.close(fig)  # Close if not displaying to free memory
 
-        return (fig, ax) if (plot or fig_save_path) else None
+        return None
     
 
 
@@ -363,11 +373,12 @@ class AcousticShap():
         """
       
         
-        fig, ax = None, None
+        if not ax:
+            fig, ax = plt.subplots(figsize=figsize)
                 
         # Only create a figure if we need to plot or save
         if plot or fig_save_path:
-            fig, ax = plt.subplots(figsize=figsize)
+            
             plot_SHAP_highlighted_spectrogram(
                 ax=ax,
                 total_duration=None,
@@ -391,6 +402,6 @@ class AcousticShap():
             else:
                 plt.close(fig)  # Close if not displaying to free memory
 
-        return (fig, ax) if (plot or fig_save_path) else None
+        return  None
     
       
