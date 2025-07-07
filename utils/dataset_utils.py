@@ -223,36 +223,48 @@ def get_age_category(age: int) -> str:
     else:
         return demography_mapping["+80"] 
 
-def peak_normalization( audio_path: str, target_peak: float = 0.95,output_dir: str = "./peak_norm_audio") -> np.ndarray:
-        """
-        Normalize the audio to a target peak amplitude.
+def peak_normalization(
+    audio_path: str,
+    target_peak: float = 0.95,
+    output_dir: str = "./peak_norm_audio"
+) -> str:  # Returns the output file path (str), not np.ndarray
+    """
+    Normalize the audio to a target peak amplitude.
 
-        Args:
-            audio: Input audio signal
-            target_peak: Target peak amplitude (default: 0.95 to avoid clipping)
+    Args:
+        audio_path: Path to the input audio file.
+        target_peak: Target peak amplitude (default: 0.95 to avoid clipping).
+        output_dir: Directory to save the normalized audio.
 
-        Returns:
-            Normalized audio signal
-        """
-        audio, sr = torchaudio.load(audio_path)
-
-        # Find the absolute peak
-        peak = np.max(np.abs(audio))
-
-        # Calculate gain factor
-        if peak > 0:
-            gain = target_peak / peak
-        else:
-            gain = 1.0  # Avoid division by zero
-
-        # Apply gain
-        normalized_audio = audio * gain
-
-        os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, audio_path.split("/")[-1].split(".")[0] + ".wav")
-        processed_audio_path = save_processed_audio(normalized_audio,sr,output_path)
-
-        return processed_audio_path
+    Returns:
+        Path to the normalized audio file.
+    """
+    # Load audio (returns PyTorch tensor)
+    audio, sr = torchaudio.load(audio_path)
+    
+    # Convert to NumPy for compatibility with np.max()
+    audio_np = audio.numpy()  # Shape: (channels, samples)
+    
+    # Find the absolute peak (flatten if multi-channel)
+    peak = np.max(np.abs(audio_np))  # Works for both mono/stereo
+    
+    # Calculate gain factor
+    if peak > 0:
+        gain = target_peak / peak
+    else:
+        gain = 1.0  # Avoid division by zero
+    
+    # Apply gain (PyTorch tensor operation)
+    normalized_audio = audio * gain
+    
+    # Save the normalized audio
+    os.makedirs(output_dir, exist_ok=True)
+    output_filename = os.path.basename(audio_path).split(".")[0] + "_normalized.wav"
+    output_path = os.path.join(output_dir, output_filename)
+    
+    torchaudio.save(output_path, normalized_audio, sr)
+    
+    return output_path  # Return the saved file path
 
 def preprocess_data(audio_path: str,
                age: int,
