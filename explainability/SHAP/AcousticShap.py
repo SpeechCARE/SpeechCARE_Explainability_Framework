@@ -34,70 +34,32 @@ class AcousticShap():
         self,
         audio_path,
         demography_info,
-        config,
-        frame_duration=0.3,
-        formants_to_plot=["F0", "F3"],
         segment_length=5,
-        overlap=0.2,
-        target_sr=16000,
         baseline_type='zeros'
       ):
         """
         Calculates SHAP values for the given audio file, creates a figure with a spectrogram
         and frequency Shannon entropy subplots, saves the figure to fig_save_path, and returns the figure.
         """
-        audio_path = str(audio_path)
-        audio_label = self.model.inference(audio_path, demography_info, config)[0]
+    
+        input_values,_,_,_ = model.preprocess_data(audio_path,segment_length=segment_length,demography_info=demography_info)
 
         shap_results = self.calculate_speech_shap_values(
-            audio_path,
-            segment_length=segment_length,
-            overlap=overlap,
-            target_sr=target_sr,
+            input_values=input_values,
             baseline_type=baseline_type,
         )
-        shap_values = shap_results["shap_values"]
-        shap_values_aggregated = shap_results["shap_values_aggregated"]
-        predictions = shap_results["predictions"]
 
-        # Create the figure and grid
-        fig = plt.figure(figsize=(20, 5.5))
-        gs = gridspec.GridSpec(2, 1, height_ratios=[4, 1.5])
 
-        # Spectrogram subplot
-        ax0 = plt.subplot(gs[0])
-        _ = self.visualize_shap_spectrogram(
-            audio_path,
-            shap_values,
-            audio_label,
-            sr=target_sr,
-            segment_length=segment_length,
-            overlap=overlap,
-            merge_frame_duration=frame_duration,
-            formants_to_plot=formants_to_plot,
-            fig_save_path=None,
-            ax=ax0
-        )
+        return shap_results
 
-        # Frequency Shannon Entropy subplot
-        ax1 = plt.subplot(gs[1])
-        _ = self.frequency_shannon_entropy(
-            audio_path,
-            ax=ax1,
-            smooth_window=50
-        )
-
-        plt.tight_layout()
-        # Ensure the directory exists and save the figure
-        fig_save_path = f"speech_shap_{os.path.basename(audio_path)}.png"
-        plt.savefig(fig_save_path, dpi=600, bbox_inches="tight", transparent=True)
-        return fig_save_path
+        
 
     def calculate_speech_shap_values(
         self,
-        input_values,
+        input_values=None,
         baseline_type='zeros'
       ):
+
 
         device = next(self.model.parameters()).device
         input_values = input_values.clone().detach().to(device)
@@ -253,13 +215,13 @@ class AcousticShap():
             )
         else:
 
-            acoustic_shap_values = self.calculate_speech_shap_values(
+
+            acoustic_shap_values = self.get_speech_shap_results(
                 audio_path,
-                segment_length=segment_length,
-                overlap=overlap,
-                target_sr=sr,
-                baseline_type=baseline_type,
-            )["shap_values"]
+                demography_info,
+                segment_length,
+                baseline_type
+            )
 
             return self.visualize_shap_spectrogram(
                 ax=ax,
