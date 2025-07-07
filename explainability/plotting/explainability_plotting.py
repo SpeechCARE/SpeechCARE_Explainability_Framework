@@ -375,7 +375,7 @@ def plot_SHAP_highlighted_spectrogram(
         shap_values=None,
         pauses=None,
         formants_data=None,
-        label=0,
+        label=None,
         visualization_mode=1,
         overlay_negatives=True,
         blur_negatives=False,
@@ -386,7 +386,7 @@ def plot_SHAP_highlighted_spectrogram(
         segment_length=5,
         overlap=0.2,
         merge_frame_duration=0.3,
-        fade_alpha=0.36,
+        fade_alpha=0.3,
         blur_sigma=3,
         return_base64=False,
         figsize = (10, 4),
@@ -405,10 +405,14 @@ def plot_SHAP_highlighted_spectrogram(
     else:
         fig = ax.figure
 
+
     # Load and compute spectrogram
     audio, _ = librosa.load(audio_path, sr=sr)
     S = librosa.feature.melspectrogram(y=audio, sr=sr, n_fft=2048, hop_length=hop_length, power=2.0)
     log_S = librosa.power_to_db(S, ref=np.max)
+
+    if total_duration is None:
+        total_duration = librosa.get_duration(y=audio, sr=sr)
 
     # Aggregate SHAP values
     shap_values_label = shap_values[0, :, :, label]
@@ -563,12 +567,12 @@ def plot_spectrogram(
     total_duration,
     audio_path,
     sr=16000,
+    pauses =None,
+    formants_data = None,
     hop_length=512,
-    segment_length=5,
-    overlap=0.2,
-    merge_frame_duration=0.3,
     cmap='viridis',
-    title="Spectrogram"
+    title="Spectrogram",
+    legend_size = 10
   ):
 
 
@@ -577,7 +581,21 @@ def plot_spectrogram(
 
     log_S = librosa.power_to_db(S, ref=np.max)
     img = librosa.display.specshow(log_S, sr=sr, x_axis="time", y_axis="mel", cmap=cmap, ax=ax)
-    frame_times = librosa.frames_to_time(np.arange(log_S.shape[1]), sr=sr, hop_length=hop_length)
+
+    legend_handles = []
+
+    if pauses:
+        pause_handles = overlay_pauses(ax, pauses, sr // 2)
+        legend_handles.extend(pause_handles)
+    if formants_data:
+        formant_handles = overlay_formants(ax, formants_data, audio_path)
+        legend_handles.extend(formant_handles)
+
+    if legend_handles:
+        ax.legend(handles=legend_handles, loc='upper right', prop={'size': legend_size})
+
+
+    if title: ax.set_title(title)
 
     ax.set_ylabel("Frequency (Hz)")
     ax.set_title(f"{title}")

@@ -168,7 +168,7 @@ class EntropyAnalyzer:
         segments_std_threshold: float = 0.4,
         segments_merge_gap: float = 0.5,
         flucturation_frame_size: int =17,
-        figsize: Tuple[int, int] = (20, 2),
+        figsize: Tuple[int, int] = (10, 4),
         dpi: int = 200,
         visualize: bool = False,
         filter_signal:bool = False,

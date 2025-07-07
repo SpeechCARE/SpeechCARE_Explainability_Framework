@@ -223,6 +223,37 @@ def get_age_category(age: int) -> str:
     else:
         return demography_mapping["+80"] 
 
+def peak_normalization( audio_path: str, target_peak: float = 0.95,output_dir: str = "./peak_norm_audio") -> np.ndarray:
+        """
+        Normalize the audio to a target peak amplitude.
+
+        Args:
+            audio: Input audio signal
+            target_peak: Target peak amplitude (default: 0.95 to avoid clipping)
+
+        Returns:
+            Normalized audio signal
+        """
+        audio, sr = torchaudio.load(audio_path)
+
+        # Find the absolute peak
+        peak = np.max(np.abs(audio))
+
+        # Calculate gain factor
+        if peak > 0:
+            gain = target_peak / peak
+        else:
+            gain = 1.0  # Avoid division by zero
+
+        # Apply gain
+        normalized_audio = audio * gain
+
+        os.makedirs(output_dir, exist_ok=True)
+        output_path = os.path.join(output_dir, audio_path.split("/")[-1].split(".")[0] + ".wav")
+        processed_audio_path = save_processed_audio(normalized_audio,sr,output_path)
+
+        return processed_audio_path
+
 def preprocess_data(audio_path: str,
                age: int,
                trim:bool=True,
