@@ -156,7 +156,7 @@ class AcousticShap():
         overlap: float = 0.2,
         frame_duration: float = 0.3,
         baseline_type: str = 'zeros',
-        fig_save_dir: Optional[str] = None,
+        fig_save_dir: Optional[str] = 'spectrogram_figs',
         plot: bool = False
     ) -> Union[np.ndarray, Tuple[np.ndarray, ...]]:
         """

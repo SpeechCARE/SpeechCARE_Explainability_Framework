@@ -574,9 +574,9 @@ def plot_SHAP_spectrogram(
 
 def plot_spectrogram(
     ax,
-    total_duration,
     audio_path,
     sr=16000,
+    total_duration=None,
     pauses =None,
     formants_data = None,
     hop_length=512,
@@ -588,6 +588,9 @@ def plot_spectrogram(
 
     audio, _ = librosa.load(audio_path, sr=sr)
     S = librosa.feature.melspectrogram(y=audio, sr=sr, n_fft=2048, hop_length=hop_length, power=2.0)
+
+    if total_duration is None:
+        total_duration = librosa.get_duration(y=audio, sr=sr)
 
     log_S = librosa.power_to_db(S, ref=np.max)
     img = librosa.display.specshow(log_S, sr=sr, x_axis="time", y_axis="mel", cmap=cmap, ax=ax)
