@@ -157,7 +157,8 @@ class AcousticShap():
         frame_duration: float = 0.3,
         baseline_type: str = 'zeros',
         fig_save_dir: Optional[str] = 'spectrogram_figs',
-        plot: bool = False
+        plot: bool = False,
+        figsize=(20,4)
     ) -> Union[np.ndarray, Tuple[np.ndarray, ...]]:
         """
         Enhanced spectrogram analysis with spectral entropy and formant tracking support.
@@ -214,7 +215,8 @@ class AcousticShap():
             frame_duration=frame_duration,
             baseline_type=baseline_type,
             fig_save_path =fig_save_path,
-            plot=plot
+            plot=plot,
+            figsize=figsize
         )
 
   
