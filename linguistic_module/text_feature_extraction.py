@@ -366,11 +366,11 @@ class TextFeatureExtractor:
         df = df.copy()
 
         # Define filler words list
-        filler_list = ["uh", "um", "hmm", "mhm", "huh"]
+        # filler_list = ["uh", "um", "hmm", "mhm", "huh"]
 
-        # Count filler words
-        df["Filler words"] = df["clean_text"].apply(
-            lambda x: sum(1 for word in self.nlp(x) if str(word.text).lower() in filler_list))
+        # # Count filler words
+        # df["Filler words"] = df["clean_text"].apply(
+        #     lambda x: sum(1 for word in self.nlp(x) if str(word.text).lower() in filler_list))
         
         # Calculate lexical frequency (only for existing POS columns)
         real_pos_list = ['VERB', 'PROPN', 'NOUN', 'ADV', 'ADJ']
@@ -402,7 +402,7 @@ class TextFeatureExtractor:
             df["Speech rate"] = 0
 
         # Calculate filler rate
-        df["Filler rate"] = df["Filler words"].values / rate_denominator
+        # df["Filler rate"] = df["Filler words"].values / rate_denominator
 
 
         return df
