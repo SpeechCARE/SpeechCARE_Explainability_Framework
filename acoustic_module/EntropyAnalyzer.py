@@ -3,6 +3,8 @@ from scipy.signal import butter, filtfilt
 from typing import List, Tuple, Optional, Dict, Any
 import librosa
 import matplotlib.pyplot as plt
+from explainability.plotting.explainability_plotting import plot_entropy
+
 
 class EntropyAnalyzer:
     """
@@ -169,9 +171,12 @@ class EntropyAnalyzer:
         segments_merge_gap: float = 0.5,
         flucturation_frame_size: int =17,
         figsize: Tuple[int, int] = (10, 4),
+        legend_size:int=10,
         dpi: int = 200,
         visualize: bool = False,
         filter_signal:bool = False,
+        ax=None,
+        fig_save_path=None,
     ) -> Dict[str, Any]:
 
         sr = sr or self.default_sr
@@ -203,49 +208,28 @@ class EntropyAnalyzer:
         # Detect flat segments
         flat_segments = self.detect_flat_segments(smoothed_entropy, times, min_duration, segments_merge_gap, segments_std_threshold, flucturation_frame_size)
 
-        # Visualization
-        if visualize:
-            self._visualize_analysis(
-                times[:len(smoothed_entropy)],
-                smoothed_entropy,
-                flat_segments,
-                figsize,
-                dpi
-            )
-
-        return {
+        entropy_data = {
             "times": times[:len(smoothed_entropy)],
             "smoothed_entropy": smoothed_entropy,
             "flat_segments": flat_segments
         }
 
-    def _visualize_analysis(
-        self,
-        times: np.ndarray,
-        smoothed_entropy: np.ndarray,
-        flat_segments: List[Tuple[float, float]],
-        figsize: Tuple[int, int],
-        dpi: int
-    ) -> None:
-        """
-        Visualize the entropy analysis results.
+        # Visualization
+        if visualize or fig_save_path:
+            if not ax:
+                fig, ax = plt.subplots(figsize=figsize)
 
-        Args:
-            times: Time points
-            smoothed_entropy: Smoothed entropy values
-            flat_segments: Detected flat segments
-            figsize: Figure dimensions
-            dpi: Figure resolution
-        """
-        plt.figure(figsize=figsize, dpi=dpi)
-        plt.plot(times, smoothed_entropy, label='Smoothed Entropy')
+            plot_entropy(ax=ax,
+                total_duration=entropy_data['times'][-1],
+                entropy_data= entropy_data,
+                flat_segments=flat_segments,
+                legend_size=legend_size
+            )
 
-        for start, end in flat_segments:
-            plt.axvspan(start, end, color='green', alpha=0.3, label='Flat Segment' if start == flat_segments[0][0] else "")
-
-        plt.xlabel('Time (s)')
-        plt.ylabel('Normalized Entropy')
-        plt.title('Entropy Analysis with Flat Segments')
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
+            if fig_save_path:
+                plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
+            
+            if visualize:
+                plt.show()
+      
+        return entropy_data

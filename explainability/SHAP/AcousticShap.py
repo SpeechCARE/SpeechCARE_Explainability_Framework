@@ -42,7 +42,7 @@ class AcousticShap():
         and frequency Shannon entropy subplots, saves the figure to fig_save_path, and returns the figure.
         """
     
-        input_values,_,_,_ = model.preprocess_data(audio_path,segment_length=segment_length,demography_info=demography_info)
+        input_values,_,_,_ = self.model.preprocess_data(audio_path,segment_length=segment_length,demography_info=demography_info)
 
         shap_results = self.calculate_speech_shap_values(
             input_values=input_values,

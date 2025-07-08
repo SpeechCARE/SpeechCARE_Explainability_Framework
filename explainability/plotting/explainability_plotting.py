@@ -324,7 +324,8 @@ def plot_entropy(
     ax.set_ylabel("Entropy (bits)")
     set_time_ticks_ms(ax, total_duration)
     ax.legend(loc='upper right', prop={'size': legend_size})
-    ax.grid(True, alpha=0.3)
+    ax.grid(True, alpha=0.2)
+    ax.set_xlim(left=0)
 
     # Return as base64 image if requested
     if return_base64 and fig_created:
