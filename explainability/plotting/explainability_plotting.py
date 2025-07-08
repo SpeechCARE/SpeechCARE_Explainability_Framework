@@ -321,7 +321,7 @@ def plot_entropy(
 
     
     if include_title: ax.set_title("Spectral Entropy")
-    ax.set_ylabel("Entropy (bits)")
+    ax.set_ylabel("Normalized Entropy (bits)")
     set_time_ticks_ms(ax, total_duration)
     ax.legend(loc='upper right', prop={'size': legend_size})
     ax.grid(True, alpha=0.2)
