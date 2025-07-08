@@ -30,7 +30,7 @@ def categorize_rhythmic_structure(flat_segments: List[Tuple[float, float]]) -> s
         - 'Non-Rhythmic': Significant flat segments (>2 segments or any segment >10s)
     """
     if not flat_segments:
-        return "Rhythmic"
+        return 0,"Rhythmic"
     
     durations = [end - start for start, end in flat_segments]
     segment_count = len(durations)
