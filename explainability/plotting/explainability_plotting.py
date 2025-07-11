@@ -308,10 +308,8 @@ def plot_entropy(
     Optionally return a base64 image for HTML embedding.
     """
 
-    fig_created = False
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
-        fig_created = True
     else:
         fig = ax.figure
 
@@ -334,7 +332,7 @@ def plot_entropy(
     ax.set_xlim(left=0)
 
     # Return as base64 image if requested
-    if return_base64 and fig_created:
+    if return_base64:
         buf = BytesIO()
         fig.savefig(buf, format='png', bbox_inches='tight')
         buf.seek(0)

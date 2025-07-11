@@ -3,7 +3,7 @@ from scipy.signal import butter, filtfilt
 from typing import List, Tuple, Optional, Dict, Any
 import librosa
 import matplotlib.pyplot as plt
-from explainability.plotting.explainability_plotting import plot_entropy
+# from explainability.plotting.explainability_plotting import plot_entropy
 
 
 class EntropyAnalyzer:
@@ -218,7 +218,6 @@ class EntropyAnalyzer:
  
         if not ax:
             fig, ax = plt.subplots(figsize=figsize)
-
 
         entropy_data['base64_image'] = plot_entropy(ax=ax,
             total_duration=entropy_data['times'][-1],
