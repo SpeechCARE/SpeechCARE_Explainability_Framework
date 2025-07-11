@@ -71,9 +71,14 @@ def plot_colored_waveform(
     else:
         fig = ax.figure
 
+    
+
     saliency = saliency_data['saliency']
     waveform = saliency_data['waveform']
     time = saliency_data['time']
+
+    if not total_duration:
+        total_duration = time[-1]
 
     # Create line segments
     points = np.array([time, waveform]).T.reshape(-1, 1, 2)

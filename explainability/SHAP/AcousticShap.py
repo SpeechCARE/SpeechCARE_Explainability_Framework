@@ -277,6 +277,8 @@ class AcousticShap():
         """
         if not ax:
             fig, ax = plt.subplots(figsize=figsize)
+        else:
+            fig = ax.figure
                 
 
         image_base64 = None
@@ -297,9 +299,9 @@ class AcousticShap():
             plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
         
         if plot:
-            plt.show()
+            plt.show(fig)
         else:
-            plt.close(fig)  # Close if not displaying to free memory
+            plt.close()  # Close if not displaying to free memory
 
         return  image_base64 
     
@@ -347,6 +349,8 @@ class AcousticShap():
         
         if not ax:
             fig, ax = plt.subplots(figsize=figsize)
+        else:
+            fig = ax.figure
         
         image_base64 = None
        
