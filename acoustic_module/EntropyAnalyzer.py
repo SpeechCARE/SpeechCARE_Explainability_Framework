@@ -3,7 +3,7 @@ from scipy.signal import butter, filtfilt
 from typing import List, Tuple, Optional, Dict, Any
 import librosa
 import matplotlib.pyplot as plt
-# from explainability.plotting.explainability_plotting import plot_entropy
+from explainability.plotting.explainability_plotting import plot_entropy
 
 
 class EntropyAnalyzer:
