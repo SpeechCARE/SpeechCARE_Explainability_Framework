@@ -623,4 +623,4 @@ def vocal_analysis_interpretation_report(sample_name: str, features: dict, pred_
     </body>
     </html>
     """
-    return html
+    return interpretations , html

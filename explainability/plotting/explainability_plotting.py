@@ -57,7 +57,8 @@ def plot_colored_waveform(
     min_saliency=0.1,
     return_base64=False,
     figsize = (10, 3),
-    include_title=True
+    include_title=True,
+    plot = True
 ):
     """
     Plot a waveform where segments with saliency above a threshold are red,
