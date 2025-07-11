@@ -165,7 +165,7 @@ class AcousticShap():
             formants_to_plot = []
 
         # Generate appropriate spectrogram and formants
-        self._generate_spectrogram(
+        return self._generate_spectrogram(
             spec_type=spectrogram_type,
             audio_path=audio_path,
             demography_info=demography_info,
@@ -351,6 +351,7 @@ class AcousticShap():
         else:
             fig = ax.figure
         
+     
         
         image_base64 = plot_SHAP_highlighted_spectrogram(
             ax=ax,
@@ -367,6 +368,8 @@ class AcousticShap():
             merge_frame_duration=merge_frame_duration,
             return_base64=return_base64
         )
+
+       
 
         if fig_save_path:
             plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
