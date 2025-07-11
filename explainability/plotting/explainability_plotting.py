@@ -329,7 +329,8 @@ def plot_entropy(
     set_time_ticks_ms(ax, total_duration)
     ax.legend(loc='upper right', prop={'size': legend_size})
     ax.grid(True, alpha=0.2)
-    ax.set_xlim(left=0)
+    max_time = max(entropy_data['times']) if len(entropy_data['times']) > 0 else 0
+    ax.set_xlim(0, max(30, max_time))  
 
     # Return as base64 image if requested
     if return_base64:
