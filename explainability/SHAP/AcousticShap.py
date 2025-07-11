@@ -300,8 +300,7 @@ class AcousticShap():
         
         if plot:
             plt.show(fig)
-        else:
-            plt.close()  # Close if not displaying to free memory
+ 
 
         return  image_base64 
     
@@ -352,8 +351,6 @@ class AcousticShap():
         else:
             fig = ax.figure
         
-        image_base64 = None
-       
         
         image_base64 = plot_SHAP_highlighted_spectrogram(
             ax=ax,
@@ -376,8 +373,7 @@ class AcousticShap():
         
         if plot:
             plt.show()
-        else:
-            plt.close(fig)  # Close if not displaying to free memory
+
 
         return  image_base64 
     
