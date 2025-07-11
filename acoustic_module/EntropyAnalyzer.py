@@ -215,27 +215,26 @@ class EntropyAnalyzer:
             "flat_segments": flat_segments
         }
 
-        # Visualization
-        if visualize or fig_save_path:
-            if not ax:
-                fig, ax = plt.subplots(figsize=figsize)
+ 
+        if not ax:
+            fig, ax = plt.subplots(figsize=figsize)
 
-            base64_image = None
+        base64_image = None
 
-            base64_image = plot_entropy(ax=ax,
-                total_duration=entropy_data['times'][-1],
-                entropy_data= entropy_data,
-                flat_segments=flat_segments,
-                legend_size=legend_size,
-                return_base64=return_base64
-            )
+        base64_image = plot_entropy(ax=ax,
+            total_duration=entropy_data['times'][-1],
+            entropy_data= entropy_data,
+            flat_segments=flat_segments,
+            legend_size=legend_size,
+            return_base64=return_base64
+        )
 
-            entropy_data['base64_image'] = base64_image
+        entropy_data['base64_image'] = base64_image
 
-            if fig_save_path:
-                plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
-            
-            if visualize:
-                plt.show()
-      
+        if fig_save_path:
+            plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
+        
+        if visualize:
+            plt.show()
+    
         return entropy_data
