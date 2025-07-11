@@ -409,10 +409,8 @@ def plot_SHAP_highlighted_spectrogram(
     Optionally returns a base64-encoded image for HTML embedding.
     """
 
-    fig_created = False
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
-        fig_created = True
     else:
         fig = ax.figure
 
@@ -481,7 +479,7 @@ def plot_SHAP_highlighted_spectrogram(
     set_time_ticks_ms(ax, total_duration)
 
     # Return image if needed
-    if return_base64 and fig_created:
+    if return_base64:
         buf = BytesIO()
         fig.savefig(buf, format='png', bbox_inches='tight')
         buf.seek(0)
@@ -583,8 +581,15 @@ def plot_spectrogram(
     hop_length=512,
     cmap='viridis',
     title="Spectrogram",
-    legend_size = 10
+    legend_size = 10,
+    figsize =  (10, 4),
+    return_base64 = False
   ):
+    
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.figure
 
 
     audio, _ = librosa.load(audio_path, sr=sr)
@@ -615,6 +620,17 @@ def plot_spectrogram(
     ax.set_title(f"{title}")
     set_time_ticks_ms(ax, total_duration)
 
+
+    if return_base64:
+        buf = BytesIO()
+        fig.savefig(buf, format='png', bbox_inches='tight')
+        buf.seek(0)
+        image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        buf.close()
+        plt.close(fig)
+        return image_base64
+
+    return None
 
 
 # ===================== Main Plot Function =====================

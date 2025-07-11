@@ -120,7 +120,8 @@ class AcousticShap():
         baseline_type: str = 'zeros',
         fig_save_dir: Optional[str] = 'spectrogram_figs',
         plot: bool = False,
-        figsize=(20,4)
+        figsize=(20,4),
+        return_base64=False,
     ) -> Union[np.ndarray, Tuple[np.ndarray, ...]]:
         """
         Enhanced spectrogram analysis with spectral entropy and formant tracking support.
@@ -178,7 +179,8 @@ class AcousticShap():
             baseline_type=baseline_type,
             fig_save_path =fig_save_path,
             plot=plot,
-            figsize=figsize
+            figsize=figsize,
+            return_base64=return_base64,
         )
 
   
@@ -198,7 +200,8 @@ class AcousticShap():
         baseline_type: str,
         fig_save_path:str,
         plot: bool= True,
-        figsize:Tuple[int, int] = (10,4)
+        figsize:Tuple[int, int] = (10,4),
+        return_base64: bool= False,
     ) -> np.ndarray:
         """Internal method to generate appropriate spectrogram."""
         fig, ax = plt.subplots(figsize=figsize)
@@ -211,7 +214,8 @@ class AcousticShap():
                 pauses=pauses,
                 fig_save_path=fig_save_path,
                 plot=plot,
-                figsize=figsize
+                figsize=figsize,
+                return_base64=return_base64
             )
         else:
 
@@ -236,7 +240,8 @@ class AcousticShap():
                 pauses=pauses,
                 fig_save_path=fig_save_path,
                 plot=plot,
-                figsize=figsize
+                figsize=figsize,
+                return_base64=return_base64
             )
 
 
@@ -251,7 +256,8 @@ class AcousticShap():
         fig_save_path=None,
         ax=None,
         plot=False,
-        figsize = (10, 4)
+        figsize = (10, 4),
+        return_base64 = False
     ):
         """
         Visualize and return the original spectrogram with formants and pauses.
@@ -272,10 +278,12 @@ class AcousticShap():
         if not ax:
             fig, ax = plt.subplots(figsize=figsize)
                 
+
+        image_base64 = None
         # Only create a figure if we need to plot or save
         if plot or fig_save_path:
             
-            plot_spectrogram(
+            image_base64 = plot_spectrogram(
                 ax=ax,
                 total_duration=None,
                 audio_path=audio_path,
@@ -283,7 +291,8 @@ class AcousticShap():
                 hop_length=hop_length,
                 pauses=pauses,
                 formants_data=formants_to_plot,
-                title="Spectrogram"
+                title="Spectrogram",
+                return_base64=return_base64
             )
 
             if fig_save_path:
@@ -294,7 +303,7 @@ class AcousticShap():
             else:
                 plt.close(fig)  # Close if not displaying to free memory
 
-        return None
+        return  image_base64 
     
 
 
@@ -313,7 +322,8 @@ class AcousticShap():
         pauses = None,
         ax=None,
         plot=False,
-        figsize = (10, 4)
+        figsize = (10, 4),
+        return_base64=False
     ):
         """
         Visualize the spectrogram with intensity modified by SHAP values, with optional formant plotting.
@@ -339,11 +349,12 @@ class AcousticShap():
         
         if not ax:
             fig, ax = plt.subplots(figsize=figsize)
-                
+        
+        image_base64 = None
         # Only create a figure if we need to plot or save
         if plot or fig_save_path:
             
-            plot_SHAP_highlighted_spectrogram(
+            image_base64 = plot_SHAP_highlighted_spectrogram(
                 ax=ax,
                 total_duration=None,
                 audio_path=audio_path,
@@ -356,6 +367,7 @@ class AcousticShap():
                 segment_length=segment_length,
                 overlap=overlap,
                 merge_frame_duration=merge_frame_duration,
+                return_base64=return_base64
             )
 
             if fig_save_path:
@@ -366,6 +378,6 @@ class AcousticShap():
             else:
                 plt.close(fig)  # Close if not displaying to free memory
 
-        return  None
+        return  image_base64 
     
       

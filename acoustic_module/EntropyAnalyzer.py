@@ -175,6 +175,7 @@ class EntropyAnalyzer:
         dpi: int = 200,
         visualize: bool = False,
         filter_signal:bool = False,
+        return_base64=False,
         ax=None,
         fig_save_path=None,
     ) -> Dict[str, Any]:
@@ -219,12 +220,17 @@ class EntropyAnalyzer:
             if not ax:
                 fig, ax = plt.subplots(figsize=figsize)
 
-            plot_entropy(ax=ax,
+            base64_image = None
+
+            base64_image = plot_entropy(ax=ax,
                 total_duration=entropy_data['times'][-1],
                 entropy_data= entropy_data,
                 flat_segments=flat_segments,
-                legend_size=legend_size
+                legend_size=legend_size,
+                return_base64=return_base64
             )
+
+            entropy_data['base64_image'] = base64_image
 
             if fig_save_path:
                 plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
