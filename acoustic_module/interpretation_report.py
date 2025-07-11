@@ -464,7 +464,7 @@ def get_f0_interpret(quartile):
 
 def get_f3_interpred(quartile):
     groups = ['poor', 'limited', 'natural', 'precise']
-    return f'Tongue–lip coordination for phoneme and syllable production was {groups[quartile]} (see F3 curve).'
+    return f'Tongue–lip coordination for phoneme and syllable production was {groups[quartile]}.'
 
 def get_final_decision(pred_label):
     if pred_label == 0:
