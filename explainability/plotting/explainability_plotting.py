@@ -63,10 +63,10 @@ def plot_colored_waveform(
     Plot a waveform where segments with saliency above a threshold are red,
     and others are gray. Optionally return base64 image for HTML embedding.
     """
-    fig_created = False
+    
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
-        fig_created = True
+      
     else:
         fig = ax.figure
 
@@ -103,7 +103,7 @@ def plot_colored_waveform(
     if include_title: ax.set_title("Waveform")
     ax.set_ylabel("Amplitude")
 
-    if return_base64 and fig_created:
+    if return_base64:
         from io import BytesIO
         import base64
 

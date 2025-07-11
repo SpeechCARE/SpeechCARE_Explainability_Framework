@@ -280,28 +280,26 @@ class AcousticShap():
                 
 
         image_base64 = None
-        # Only create a figure if we need to plot or save
-        if plot or fig_save_path:
-            
-            image_base64 = plot_spectrogram(
-                ax=ax,
-                total_duration=None,
-                audio_path=audio_path,
-                sr=sr,
-                hop_length=hop_length,
-                pauses=pauses,
-                formants_data=formants_to_plot,
-                title="Spectrogram",
-                return_base64=return_base64
-            )
+ 
+        image_base64 = plot_spectrogram(
+            ax=ax,
+            total_duration=None,
+            audio_path=audio_path,
+            sr=sr,
+            hop_length=hop_length,
+            pauses=pauses,
+            formants_data=formants_to_plot,
+            title="Spectrogram",
+            return_base64=return_base64
+        )
 
-            if fig_save_path:
-                plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
-            
-            if plot:
-                plt.show()
-            else:
-                plt.close(fig)  # Close if not displaying to free memory
+        if fig_save_path:
+            plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
+        
+        if plot:
+            plt.show()
+        else:
+            plt.close(fig)  # Close if not displaying to free memory
 
         return  image_base64 
     
@@ -351,32 +349,31 @@ class AcousticShap():
             fig, ax = plt.subplots(figsize=figsize)
         
         image_base64 = None
-        # Only create a figure if we need to plot or save
-        if plot or fig_save_path:
-            
-            image_base64 = plot_SHAP_highlighted_spectrogram(
-                ax=ax,
-                total_duration=None,
-                audio_path=audio_path,
-                shap_values=shap_values,
-                pauses=pauses,
-                formants_data=formants_to_plot,
-                label=label,
-                sr=sr,
-                hop_length=hop_length,
-                segment_length=segment_length,
-                overlap=overlap,
-                merge_frame_duration=merge_frame_duration,
-                return_base64=return_base64
-            )
+       
+        
+        image_base64 = plot_SHAP_highlighted_spectrogram(
+            ax=ax,
+            total_duration=None,
+            audio_path=audio_path,
+            shap_values=shap_values,
+            pauses=pauses,
+            formants_data=formants_to_plot,
+            label=label,
+            sr=sr,
+            hop_length=hop_length,
+            segment_length=segment_length,
+            overlap=overlap,
+            merge_frame_duration=merge_frame_duration,
+            return_base64=return_base64
+        )
 
-            if fig_save_path:
-                plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
-            
-            if plot:
-                plt.show()
-            else:
-                plt.close(fig)  # Close if not displaying to free memory
+        if fig_save_path:
+            plt.savefig(fig_save_path, dpi=600, bbox_inches="tight")
+        
+        if plot:
+            plt.show()
+        else:
+            plt.close(fig)  # Close if not displaying to free memory
 
         return  image_base64 
     
