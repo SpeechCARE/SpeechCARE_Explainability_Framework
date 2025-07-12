@@ -11,7 +11,7 @@ def generate_modality_pie_base64(contribution):
     }
     color_map = {
         "Linguistic": "#558755",
-        "Acoustic": "#1E3658",
+        "Acoustic": "#5883BE",
         "Demographic": "#eb9c1e"
     }
 
