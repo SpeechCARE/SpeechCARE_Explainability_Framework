@@ -1,9 +1,3 @@
-# Core Packages
-numpy==1.24.1  # Fundamental package for array computing
-pandas==2.2.3  # Data analysis and manipulation
-scipy==1.15.2  # Scientific computing
-matplotlib==3.10.1  # Visualization
-
 # Audio Processing
 librosa==0.11.0  # Audio and music analysis
 praat-parselmouth==0.4.5  # Praat functionality in Python
@@ -11,11 +5,11 @@ opensmile==2.5.1  # Voice feature extraction
 soundfile==0.13.1  # Audio file I/O
 pydub==0.25.1  # Audio manipulation
 ffmpeg-python  # FFmpeg wrapper
-torchaudio==2.4.1  # Audio processing with PyTorch
+torchaudio==2.4.1 # Audio processing with PyTorch
+torchvision==0.19.1
 
 # Machine Learning & NLP
-torch==2.4.1  # PyTorch deep learning framework
-transformers==4.51.0  # State-of-the-art NLP models
+torch==2.4.1 # PyTorch deep learning framework
 spacy==3.8.5  # Industrial-strength NLP
 stanza==1.10.1  # Stanford NLP library
 sentence-transformers==2.7.0  # Sentence embeddings
@@ -36,6 +30,13 @@ bitsandbytes  # Efficient deep learning
 
 # API Clients
 openai==1.93.3  # OpenAI API client
+
+# Core Packages
+numpy==1.24.1  # Fundamental package for array computing
+scipy==1.15.2  # Scientific computing
+matplotlib==3.10.1  # Visualization
+pandas  
+transformers
 
 # Special Installations
 # spaCy English model
