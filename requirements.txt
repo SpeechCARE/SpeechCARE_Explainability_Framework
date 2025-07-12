@@ -1,43 +1,45 @@
-# Core packages
-librosa==0.11.0
-numpy==1.24.0
-matplotlib==3.10.1
-pandas==2.2.3
-praat-parselmouth==0.4.5
-opensmile==2.5.1
-typing_extensions==4.13.1
-shap==0.47.1
-whisperx==3.3.1
-spacy==3.8.5
-stanza==1.10.1
-torch==2.4.1
-torchaudio==2.4.1
-torchvision==0.19.1
-accelerate==1.6.0
-transformers==4.51.0
-gdown
-pydub
-ffmpeg-python
-librosa
-soundfile
-numpy<2 
+# Core Packages
+numpy==1.24.1  # Fundamental package for array computing
+pandas==2.2.3  # Data analysis and manipulation
+scipy==1.15.2  # Scientific computing
+matplotlib==3.10.1  # Visualization
 
-xformers==0.0.28.post1
-openpyxl==3.1.5
-scipy==1.15.2
-soundfile==0.13.1
-pydub==0.25.1
-huggingface_hub==0.30.1
-sentence-transformers==2.7.0
-lexicalrichness==0.5.1
-openai==1.93.3
+# Audio Processing
+librosa==0.11.0  # Audio and music analysis
+praat-parselmouth==0.4.5  # Praat functionality in Python
+opensmile==2.5.1  # Voice feature extraction
+soundfile==0.13.1  # Audio file I/O
+pydub==0.25.1  # Audio manipulation
+ffmpeg-python  # FFmpeg wrapper
+torchaudio==2.4.1  # Audio processing with PyTorch
 
-bitsandbytes
-numpy==1.24.1
-gdown
+# Machine Learning & NLP
+torch==2.4.1  # PyTorch deep learning framework
+transformers==4.51.0  # State-of-the-art NLP models
+spacy==3.8.5  # Industrial-strength NLP
+stanza==1.10.1  # Stanford NLP library
+sentence-transformers==2.7.0  # Sentence embeddings
+lexicalrichness==0.5.1  # Lexical diversity metrics
+whisperx==3.3.1  # Fast Whisper speech recognition
 
-git+https://github.com/modelscope/ms-swift.git@88dab2b6625280e813bd8835662e1d2be24a3132
+# Explainability & Visualization
+shap==0.47.1  # Model explainability
+xformers==0.0.28.post1  # Efficient transformers
 
+# Utilities
+typing_extensions==4.13.1  # Type hints support
+accelerate==1.6.0  # PyTorch acceleration
+openpyxl==3.1.5  # Excel file handling
+gdown  # Google Drive downloader
+huggingface_hub==0.30.1  # Hugging Face model hub
+bitsandbytes  # Efficient deep learning
 
+# API Clients
+openai==1.93.3  # OpenAI API client
+
+# Special Installations
 # spaCy English model
 https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl#sha256=1932429db727d4bff3deed6b34cfc05df17794f4a52eeb26cf8928f7c1a0fb85
+
+# Modelscope Swift
+git+https://github.com/modelscope/ms-swift.git@88dab2b6625280e813bd8835662e1d2be24a3132
