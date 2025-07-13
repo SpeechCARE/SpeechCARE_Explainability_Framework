@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-from matplotlib.ticker import MultipleLocator
-from matplotlib.colors import LinearSegmentedColormap
+
 import librosa
 import librosa.display
 from scipy.ndimage import gaussian_filter1d
@@ -10,7 +9,6 @@ import os
 from explainability.Gradient_based.saliency_map import interpolate_saliency
 from explainability.plotting.utils import compute_log_spectrogram ,compute_formants
 import base64
-import io
 from io import BytesIO
 
 
@@ -577,35 +575,54 @@ def plot_SHAP_spectrogram(
 
 
 def plot_spectrogram(
-    ax,
     audio_path,
+    ax=None,
     sr=16000,
     total_duration=None,
     pauses =None,
     formants_data = None,
+    use_mel =True,
     hop_length=512,
+    n_fft=2048,
+    n_mels=128,
     cmap='viridis',
     title="Spectrogram",
     legend_size = 10,
     figsize =  (10, 4),
-    return_base64 = False
+    dpi=100,
+    return_base64 = False,
+    show_axes=True,
+    add_colorbar=False,
+    colorbar_format='%+2.0f dB'
   ):
     
     if ax is None:
-        fig, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
     else:
         fig = ax.figure
 
 
     audio, _ = librosa.load(audio_path, sr=sr)
-    S = librosa.feature.melspectrogram(y=audio, sr=sr, n_fft=2048, hop_length=hop_length, power=2.0)
-
+    
     if total_duration is None:
         total_duration = librosa.get_duration(y=audio, sr=sr)
 
-    log_S = librosa.power_to_db(S, ref=np.max)
-    img = librosa.display.specshow(log_S, sr=sr, x_axis="time", y_axis="mel", cmap=cmap, ax=ax)
+    # Compute spectrogram
+    if use_mel:
+        mel_spec = librosa.feature.melspectrogram(y=audio, sr=sr, n_fft=n_fft,
+                                                  hop_length=hop_length, n_mels=n_mels, power=2.0)
+        S_db = librosa.power_to_db(mel_spec, ref=np.max)
+        title="Mel Spectrogram"
+    else:
+        stft = np.abs(librosa.stft(audio, n_fft=n_fft, hop_length=hop_length))
+        S_db = librosa.amplitude_to_db(stft, ref=np.max)
+        title="Spectrogram"
 
+
+     # Plot
+    img = librosa.display.specshow(S_db, sr=sr, hop_length=hop_length,
+                                   x_axis='time', cmap=cmap, ax=ax)
+    
     legend_handles = []
 
     if pauses:
@@ -619,12 +636,16 @@ def plot_spectrogram(
         ax.legend(handles=legend_handles, loc='upper right', prop={'size': legend_size})
 
 
-    if title: ax.set_title(title)
-
+    if title: ax.set_title(title, fontsize=12)
     ax.set_ylabel("Frequency (Hz)")
-    ax.set_title(f"{title}")
     set_time_ticks_ms(ax, total_duration)
+    plt.tight_layout(pad=0)
 
+    if add_colorbar:
+        plt.colorbar(img, ax=ax, format=colorbar_format)
+
+    if not show_axes:
+        ax.set_axis_off()
 
     if return_base64:
         buf = BytesIO()
