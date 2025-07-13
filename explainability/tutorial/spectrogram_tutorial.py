@@ -5,7 +5,6 @@ import re
 
 
 
-
 def generate_html_tutorial_page(
     examples,
     page_title="Spectrogram Interpretation Tutorial",
