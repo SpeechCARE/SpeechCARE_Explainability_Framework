@@ -22,7 +22,7 @@ This module consists of two sections:
 
 ### Linguistic Module
 
-We provide detailed interpretations of speech transcripts using **SHAP (SHapley Additive exPlanations)** in conjunction with a set of **extracted linguistic features**. This allows for a clearer understanding of how different language characteristics contribute to the model's output. (More details in `sample_notebooks/Explainability_Linguistic.ipynb`)
+We provide detailed interpretations of speech transcripts using **SHAP (SHapley Additive exPlanations)** in conjunction with a set of **extracted linguistic features**. This allows for a clearer understanding of how different language characteristics contribute to the model's output. (More details in `Explainability_Linguistic.ipynb`)
 
 ### Acoustic Module
 
@@ -38,13 +38,13 @@ We offer in-depth explanations of the speaker's audio using techniques such as:
   - Energy in the frequency domain
   - Shimmer standard deviation
 
-These features and their interpretations are visualized over **raw audio waveforms** and **spectrograms**. We also provide **plots of normalized Shannon entropy** to illustrate speech complexity. (More details in `sample_notebooks/Explainability_Acoustic.ipynb`)
+These features and their interpretations are visualized over **raw audio waveforms** and **spectrograms**. We also provide **plots of normalized Shannon entropy** to illustrate speech complexity. (More details in `Explainability_Acoustic.ipynb`)
 
 ---
 
 ## 📘 Tutorial
 
-This repository includes a **Tutorial** section, where we demonstrate—**in detail and with numerous examples**—how to interpret and read a spectrogram. (More details in `sample_notebooks/Spectrogram_Tutorial.ipynb`)
+This repository includes a **Tutorial** section, where we demonstrate—**in detail and with numerous examples**—how to interpret and read a spectrogram. (More details in `Spectrogram_Tutorial.ipynb`)
 
 ---
 
@@ -63,7 +63,6 @@ This repository includes a **Tutorial** section, where we demonstrate—**in det
 ├── interpretation/          # Final output generation and integration logic
 ├── linguistic_module/       # Text-based feature extraction and interpretation
 ├── model/                   # Model architectures and training scripts
-├── sample_notebooks/        # Example notebooks demonstrating usage
 ├── utils/                   # Utility functions and shared helpers
 
 ```
