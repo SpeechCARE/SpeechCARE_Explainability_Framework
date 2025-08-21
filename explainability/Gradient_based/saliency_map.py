@@ -121,15 +121,103 @@ def smooth_and_normalize_saliency(saliency, sample_rate):
 
     return normalized
 
-def compute_saliency_waveform(model, audio_path, input_segments, target_class=None, segment_length=5, overlap=0.2, target_sr=16000):
-    waveform = load_and_resample(audio_path, target_sr)
+# def compute_saliency_waveform(model, audio_path, input_segments, target_class=None, segment_length=5, overlap=0.2, target_sr=16000):
+#     waveform = load_and_resample(audio_path, target_sr)
+#     original_length = len(waveform)
+#     raw_saliency, raw_segments, target_class = compute_raw_saliency(model, input_segments, target_class)
+#     saliency, waveform, time = reconstruct_saliency_and_waveform(
+#         raw_saliency, raw_segments, segment_length, overlap, target_sr, original_length=original_length
+#     )
+
+#     smoothed_saliency = smooth_and_normalize_saliency(saliency, target_sr)
+
+#     return {
+#         'waveform': waveform,
+#         'saliency': smoothed_saliency,
+#         'time': time,
+#         'target_class': target_class,
+#         'class_name': model.label_rev_map.get(target_class, str(target_class)),
+#         'actual_duration': original_length / target_sr
+#     }
+
+
+def _segment_windows(num_segments, segment_length_sec, overlap, sample_rate, total_samples):
+    """
+    Compute [start,end) sample indices and [start_sec, end_sec] for each segment
+    given N segments, segment length, overlap, and the total waveform length.
+    """
+    L = int(round(segment_length_sec * sample_rate))                # segment length in samples
+    step = int(round(L * (1.0 - overlap)))                          # hop size
+    windows = []
+    windows_sec = []
+
+    for i in range(num_segments):
+        start = i * step
+        end = start + L
+        # clip to waveform bounds
+        start_clipped = max(0, min(start, total_samples))
+        end_clipped = max(0, min(end, total_samples))
+        windows.append((start_clipped, end_clipped))
+        windows_sec.append((start_clipped / sample_rate, end_clipped / sample_rate))
+    return windows, windows_sec
+
+
+def compute_saliency_waveform(model, audio_path, input_segments, target_class=None,
+                              segment_length=5, overlap=0.2, target_sr=16000):
+    """
+    Returns:
+      - waveform: np.array, original-length waveform (resampled)
+      - saliency: np.array, per-sample normalized saliency in [0,1]
+      - time: np.array, time axis (seconds) for 'waveform'/'saliency'
+      - target_class: int
+      - class_name: str
+      - actual_duration: float seconds
+      - segment_saliency_mean: np.array of shape [num_segments], mean saliency per segment window
+      - segment_windows_sec: list of (start_sec, end_sec) for each segment
+    """
+    # Load / resample
+    waveform = load_and_resample(audio_path, target_sr)  # 1D np.array
     original_length = len(waveform)
-    raw_saliency, raw_segments, target_class = compute_raw_saliency(model, input_segments, target_class)
+
+    # Raw gradients w.r.t. raw segmented input (your existing function)
+    raw_saliency, raw_segments, target_class = compute_raw_saliency(
+        model, input_segments, target_class
+    )
+
+    # Align raw per-sample saliency back to the continuous waveform timeline (your existing function)
     saliency, waveform, time = reconstruct_saliency_and_waveform(
         raw_saliency, raw_segments, segment_length, overlap, target_sr, original_length=original_length
     )
 
+    # Smooth + normalize to [0,1]
     smoothed_saliency = smooth_and_normalize_saliency(saliency, target_sr)
+
+    # ----- NEW: per-segment saliency means -----
+    # Determine number of segments from input_segments shape: [num_segments, seq_length] or [1, num_segments, seq_length]
+    if input_segments.ndim == 2:
+        num_segments = input_segments.shape[0]
+    elif input_segments.ndim == 3:
+        num_segments = input_segments.shape[1]
+    else:
+        raise ValueError("input_segments must be [num_segments, seq_length] or [1, num_segments, seq_length].")
+
+    # Compute segment sample windows and average saliency per segment
+    windows, windows_sec = _segment_windows(
+        num_segments=num_segments,
+        segment_length_sec=segment_length,
+        overlap=overlap,
+        sample_rate=target_sr,
+        total_samples=original_length
+    )
+
+    segment_means = []
+    for (start, end) in windows:
+        if end > start:
+            segment_means.append(float(np.mean(smoothed_saliency[start:end])))
+        else:
+            # Empty (fully clipped) window: define as 0.0
+            segment_means.append(0.0)
+    segment_means = np.asarray(segment_means, dtype=float)
 
     return {
         'waveform': waveform,
@@ -137,5 +225,7 @@ def compute_saliency_waveform(model, audio_path, input_segments, target_class=No
         'time': time,
         'target_class': target_class,
         'class_name': model.label_rev_map.get(target_class, str(target_class)),
-        'actual_duration': original_length / target_sr
+        'actual_duration': original_length / target_sr,
+        'segment_saliency_mean': segment_means,      # [num_segments]
+        'segment_windows_sec': windows_sec           # [(start_sec, end_sec)] * num_segments
     }
