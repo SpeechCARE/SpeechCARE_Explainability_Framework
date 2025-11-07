@@ -277,7 +277,7 @@ def generate_significant_factors(SDoH,clinical_functional,linguistic,acoustic,op
     def _generate_openai(prompt: str, **kwargs) -> str:
         """Generate text using OpenAI API."""
         return model.chat.completions.create(
-            model=kwargs.get('model', "meta-llama/llama-3.1-70b-instruct"),
+            model=kwargs.get('model', "meta-llama/Llama-3.1-405B"),
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt}

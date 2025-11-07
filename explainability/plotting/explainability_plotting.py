@@ -228,7 +228,7 @@ def overlay_formants(ax, formants_data, audio_path):
 
     try:
         ts_f0, ts_formants, values = compute_formants(audio_path, formants_data)
-        colors = {"F0": 'red', "F1": 'cyan', "F2": 'white', "F3": '#FF8C00'}
+        colors = {"F0": 'red', "F1": 'cyan', "F2": 'white', "F3": "#FF7700"}
 
         for name in formants_data:
             if name in values:
@@ -265,21 +265,21 @@ def overlay_pauses(ax, pauses, max_y):
                 (start, 0),
                 end - start,
                 max_y,
-                linewidth=2,
-                edgecolor="#ff8000",
+                linewidth=3,
+                edgecolor="#f77109",
                 facecolor='none',
                 linestyle=linestyle,
-                alpha=0.8
+                alpha=1
             )
             ax.add_patch(pause_rect)
 
             key = "Informative Pause" if mark else "Natural Pause"
             if key not in legend_handles:
                 legend_handles[key] = patches.Patch(
-                    edgecolor="#ff8000",
+                    edgecolor="#f77109",
                     facecolor='none',
                     linestyle=linestyle,
-                    linewidth=2,
+                    linewidth=1,
                     label=key
                 )
 
