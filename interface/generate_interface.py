@@ -845,6 +845,8 @@ def generate_html_report(
     # Encode files
     profile_b64 = encode_file_base64(profileImage)
     piechart_b64 = generate_modality_pie_base64(contribution)
+    with open(f"/workspace/piechart.png", "wb") as f:
+        f.write(base64.b64decode(piechart_b64))
     waveform_b64 = acoustic_plots['colored_waveform']
     shap_spect_b64 = acoustic_plots['SHAP_highlighted_spectrogram']
     entropy_b64 = acoustic_plots['entropy']
