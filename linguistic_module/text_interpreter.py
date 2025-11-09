@@ -149,6 +149,7 @@ system_prompt2 = """
         - Write the final prediction (healthy or cognitively impaired) in **one short sentence** without using bullet point.
 
         **Do not add extra explanations or points.**
+        **Do not write the value of lingusitic feeatures.**
         **Avoid referencing any quantitative measurements from the text or offering suggestions for further analysis.**
         **Do not repeat yourself.**
         ---
